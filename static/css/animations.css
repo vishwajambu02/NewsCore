@@ -1,0 +1,497 @@
+/* ══════════════════════════════════════════════════════════
+   NewsCore — animations.css
+   All keyframes + animation utility classes
+   ══════════════════════════════════════════════════════════ */
+
+/* ── Keyframes ───────────────────────────────────────────── */
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse-dot {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.5;
+    transform: scale(0.75);
+  }
+}
+
+@keyframes ticker-scroll {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes glow-pulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--signal-dim);
+  }
+
+  50% {
+    box-shadow: 0 0 0 8px transparent;
+  }
+}
+
+@keyframes hero-pan {
+  0% {
+    transform: scale(1.04) translateX(0);
+  }
+
+  50% {
+    transform: scale(1.04) translateX(-1%);
+  }
+
+  100% {
+    transform: scale(1.04) translateX(0);
+  }
+}
+
+@keyframes number-tick {
+  0% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
+
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes border-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes stagger-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Animation utility classes ───────────────────────────── */
+
+.anim-fade-in {
+  animation: fade-in 0.4s ease both;
+}
+
+.anim-slide-up {
+  animation: slide-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.anim-slide-down {
+  animation: slide-down 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.anim-slide-left {
+  animation: slide-in-left 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.anim-scale-in {
+  animation: scale-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Staggered children: add .stagger-parent to parent, children auto-delay */
+.stagger-parent>* {
+  animation: stagger-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.stagger-parent>*:nth-child(1) {
+  animation-delay: 0ms;
+}
+
+.stagger-parent>*:nth-child(2) {
+  animation-delay: 60ms;
+}
+
+.stagger-parent>*:nth-child(3) {
+  animation-delay: 120ms;
+}
+
+.stagger-parent>*:nth-child(4) {
+  animation-delay: 180ms;
+}
+
+.stagger-parent>*:nth-child(5) {
+  animation-delay: 240ms;
+}
+
+.stagger-parent>*:nth-child(6) {
+  animation-delay: 300ms;
+}
+
+.stagger-parent>*:nth-child(7) {
+  animation-delay: 360ms;
+}
+
+.stagger-parent>*:nth-child(8) {
+  animation-delay: 420ms;
+}
+
+.stagger-parent>*:nth-child(9) {
+  animation-delay: 480ms;
+}
+
+.stagger-parent>*:nth-child(10) {
+  animation-delay: 540ms;
+}
+
+.stagger-parent>*:nth-child(11) {
+  animation-delay: 600ms;
+}
+
+.stagger-parent>*:nth-child(12) {
+  animation-delay: 660ms;
+}
+
+/* Delay utilities */
+.delay-100 {
+  animation-delay: 100ms;
+}
+
+.delay-200 {
+  animation-delay: 200ms;
+}
+
+.delay-300 {
+  animation-delay: 300ms;
+}
+
+.delay-400 {
+  animation-delay: 400ms;
+}
+
+.delay-500 {
+  animation-delay: 500ms;
+}
+
+/* ── Scroll-reveal via IntersectionObserver ──────────────── */
+/* JS adds .is-visible when element enters viewport */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Hero entrance ───────────────────────────────────────── */
+.hero-card {
+  animation: fade-in 0.7s ease both;
+}
+
+.hero-content {
+  animation: slide-up 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+}
+
+.hero-img {
+  animation: hero-pan 20s ease-in-out infinite;
+}
+
+.trending-sidebar {
+  animation: slide-in-left 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+}
+
+/* ── Navbar entrance ─────────────────────────────────────── */
+.navbar {
+  animation: slide-down 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Category pill hover ─────────────────────────────────── */
+.pill {
+  transition: color 150ms ease, background 150ms ease,
+    border-color 150ms ease, transform 120ms ease;
+}
+
+.pill:hover {
+  transform: translateY(-1px);
+}
+
+.pill:active {
+  transform: translateY(0);
+}
+
+/* ── Card animations ─────────────────────────────────────── */
+.article-card {
+  animation: card-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.article-grid .article-card:nth-child(1) {
+  animation-delay: 0ms;
+}
+
+.article-grid .article-card:nth-child(2) {
+  animation-delay: 45ms;
+}
+
+.article-grid .article-card:nth-child(3) {
+  animation-delay: 90ms;
+}
+
+.article-grid .article-card:nth-child(4) {
+  animation-delay: 135ms;
+}
+
+.article-grid .article-card:nth-child(5) {
+  animation-delay: 180ms;
+}
+
+.article-grid .article-card:nth-child(6) {
+  animation-delay: 225ms;
+}
+
+.article-grid .article-card:nth-child(7) {
+  animation-delay: 270ms;
+}
+
+.article-grid .article-card:nth-child(8) {
+  animation-delay: 315ms;
+}
+
+.article-grid .article-card:nth-child(9) {
+  animation-delay: 360ms;
+}
+
+.article-grid .article-card:nth-child(10) {
+  animation-delay: 405ms;
+}
+
+.article-grid .article-card:nth-child(11) {
+  animation-delay: 450ms;
+}
+
+.article-grid .article-card:nth-child(12) {
+  animation-delay: 495ms;
+}
+
+/* ── Bookmark button ─────────────────────────────────────── */
+.bookmark-btn,
+.icon-btn-sm.bookmark-btn {
+  transition: color 150ms ease, background 150ms ease, transform 120ms ease;
+}
+
+.bookmark-btn:active,
+.icon-btn-sm.bookmark-btn:active {
+  transform: scale(0.85);
+}
+
+.bookmark-btn.bookmarked svg,
+.icon-btn-sm.bookmark-btn.bookmarked svg {
+  animation: scale-in 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  fill: var(--gold);
+  stroke: var(--gold);
+}
+
+/* ── Listen button pulse ─────────────────────────────────── */
+.listen-btn.listening {
+  color: var(--signal);
+  animation: glow-pulse 1.5s ease-in-out infinite;
+}
+
+/* ── AI summary appear ───────────────────────────────────── */
+.ai-summary-panel {
+  animation: scale-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
+}
+
+/* ── Toast ───────────────────────────────────────────────── */
+.toast {
+  transition: opacity 250ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 250ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ── Share modal ─────────────────────────────────────────── */
+.share-panel {
+  animation: scale-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* ── Search drawer ───────────────────────────────────────── */
+.search-drawer {
+  transition: opacity 200ms ease, transform 200ms ease, visibility 200ms ease;
+}
+
+/* ── Ticker ──────────────────────────────────────────────── */
+.ticker-track {
+  animation: ticker-scroll 60s linear infinite;
+  will-change: transform;
+}
+
+.ticker-track:hover {
+  animation-play-state: paused;
+}
+
+/* ── Trending rank hover ─────────────────────────────────── */
+.trending-item {
+  transition: background 150ms ease;
+  border-radius: var(--radius-sm);
+  margin: 0 -8px;
+  padding: 10px 8px;
+}
+
+.trending-item:hover {
+  background: var(--bg-elevated);
+}
+
+/* ── Skeleton shimmer ────────────────────────────────────── */
+.skeleton-img::after,
+.skeleton-line::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.05) 50%,
+      transparent 100%);
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+/* ── Loading spinner ─────────────────────────────────────── */
+.spinner {
+  animation: spin 0.75s linear infinite;
+}
+
+/* ── Live dot ────────────────────────────────────────────── */
+.live-dot {
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+/* ── Reduced motion ──────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+
+  .reveal,
+  .anim-fade-in,
+  .anim-slide-up,
+  .anim-slide-down,
+  .anim-slide-left,
+  .anim-scale-in,
+  .stagger-parent>*,
+  .hero-card,
+  .hero-content,
+  .hero-img,
+  .trending-sidebar,
+  .navbar,
+  .article-card,
+  .ai-summary-panel,
+  .share-panel,
+  .ticker-track {
+    animation: none !important;
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

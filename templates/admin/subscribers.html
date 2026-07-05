@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Subscribers — Admin — NewsCore{% endblock %}
+{% block body_class %}admin-body{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+
+  <!-- Sidebar -->
+  <aside class="admin-sidebar">
+    <div style="padding:0 20px 20px;border-bottom:1px solid var(--border);margin-bottom:16px">
+      <span style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-3)">ADMIN PANEL</span>
+    </div>
+    <a href="{{ url_for('admin.dashboard') }}" class="admin-nav-link">📊 Dashboard</a>
+    <a href="{{ url_for('admin.articles') }}" class="admin-nav-link">📰 Articles</a>
+    <a href="{{ url_for('admin.sources') }}"  class="admin-nav-link">📡 RSS Sources</a>
+    <a href="{{ url_for('admin.users') }}"    class="admin-nav-link">👤 Users</a>
+    <a href="{{ url_for('admin.subscribers') }}" class="admin-nav-link active">✉️ Subscribers</a>
+    <div style="margin-top:auto;padding:20px">
+      <form method="POST" action="{{ url_for('admin.fetch_now') }}">
+        <button type="submit" class="btn-read" style="width:100%;text-align:center">⟳ Fetch Now</button>
+      </form>
+      <a href="{{ url_for('admin.logout') }}" style="display:block;margin-top:12px;text-align:center;font-size:0.8rem;color:var(--text-3)">Logout</a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="admin-main">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+      <h1 style="font-family:var(--font-display);font-weight:800;font-size:1.5rem">
+        Subscribers
+        <span style="font-size:0.9rem;font-weight:500;color:var(--text-3)">({{ total_subs }} total, {{ active_subs }} active)</span>
+      </h1>
+
+      <form method="GET" action="{{ url_for('admin.subscribers') }}" style="display:flex;gap:8px">
+        <input type="text" name="q" value="{{ query }}" placeholder="Search email…"
+               style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:0.85rem;min-width:220px" />
+        <button type="submit" class="btn-read">Search</button>
+      </form>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for cat, msg in messages %}
+          <div class="flash flash--{{ cat }}" style="margin-bottom:16px">{{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;overflow-x:auto">
+      {% if subscribers.items %}
+      <table style="width:100%;border-collapse:collapse;font-size:0.85rem">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border)">
+            <th style="text-align:left;padding:10px 8px;color:var(--text-3)">Email</th>
+            <th style="text-align:left;padding:10px 8px;color:var(--text-3)">Categories</th>
+            <th style="text-align:left;padding:10px 8px;color:var(--text-3)">Status</th>
+            <th style="text-align:left;padding:10px 8px;color:var(--text-3)">Subscribed</th>
+            <th style="text-align:right;padding:10px 8px;color:var(--text-3)">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in subscribers.items %}
+          <tr style="border-bottom:1px solid var(--border)" id="sub-row-{{ s.id }}">
+            <td style="padding:10px 8px;color:var(--text)">{{ s.email }}</td>
+            <td style="padding:10px 8px;color:var(--text-2);font-size:0.8rem">{{ s.categories }}</td>
+            <td style="padding:10px 8px">
+              <span id="sub-status-{{ s.id }}" style="color:{{ '#06d6a0' if s.active else 'var(--text-3)' }}">
+                {{ '✓ Active' if s.active else '— Inactive' }}
+              </span>
+            </td>
+            <td style="padding:10px 8px;color:var(--text-3);font-family:var(--font-mono);font-size:0.8rem">
+              {{ s.subscribed_at.strftime('%d %b %Y') }}
+            </td>
+            <td style="padding:10px 8px;text-align:right;white-space:nowrap">
+              <button type="button" class="btn-read" style="padding:4px 10px;font-size:0.75rem"
+                      onclick="toggleSub({{ s.id }})">Toggle</button>
+              <form method="POST" action="{{ url_for('admin.delete_subscriber', sub_id=s.id) }}"
+                    style="display:inline" onsubmit="return confirm('Remove this subscriber?')">
+                <button type="submit" class="btn-read" style="padding:4px 10px;font-size:0.75rem;color:var(--signal)">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <!-- Pagination -->
+      <div style="display:flex;justify-content:center;gap:8px;margin-top:20px">
+        {% if subscribers.has_prev %}
+        <a href="{{ url_for('admin.subscribers', page=subscribers.prev_num, q=query) }}" class="btn-read">← Prev</a>
+        {% endif %}
+        <span style="padding:8px 12px;color:var(--text-3);font-size:0.85rem">Page {{ subscribers.page }} of {{ subscribers.pages }}</span>
+        {% if subscribers.has_next %}
+        <a href="{{ url_for('admin.subscribers', page=subscribers.next_num, q=query) }}" class="btn-read">Next →</a>
+        {% endif %}
+      </div>
+
+      {% else %}
+      <p style="color:var(--text-3);font-size:0.85rem;text-align:center;padding:24px 0">No subscribers found.</p>
+      {% endif %}
+    </div>
+  </main>
+</div>
+
+<script>
+async function toggleSub(id) {
+  try {
+    const res = await fetch(`/admin/subscribers/${id}/toggle`, { method: 'POST' });
+    const data = await res.json();
+    const statusEl = document.getElementById(`sub-status-${id}`);
+    statusEl.textContent = data.active ? '✓ Active' : '— Inactive';
+    statusEl.style.color = data.active ? '#06d6a0' : 'var(--text-3)';
+  } catch (e) {
+    alert('Could not update subscriber status.');
+  }
+}
+</script>
+{% endblock %}

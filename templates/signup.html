@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Create Account — NewsCore{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-header">
+      <span class="logo-mark">N</span>
+      <h1>Create your own account</h1>
+      <p class="auth-sub">Set up your profile — verified with a quick email code</p>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for cat, msg in messages %}
+          <div class="flash flash--{{ cat }}">{{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('auth.signup') }}" class="auth-form">
+      <label class="auth-label">Full Name</label>
+      <input type="text" name="name" class="auth-input" required placeholder="Jane Doe" autofocus />
+
+      <label class="auth-label">Phone Number</label>
+      <input type="tel" name="phone" class="auth-input" required placeholder="+91 98765 43210" />
+
+      <label class="auth-label">Email</label>
+      <input type="email" name="email" class="auth-input" required placeholder="you@example.com" />
+
+      <button type="submit" class="btn-auth-submit">Create Account</button>
+    </form>
+
+    <p class="auth-switch">Just want quick access? <a href="{{ url_for('auth.login') }}">Sign in with Email</a></p>
+  </div>
+</div>
+{% endblock %}

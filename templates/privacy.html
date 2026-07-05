@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Privacy Policy — NewsCore{% endblock %}
+
+{% block content %}
+<div class="page-container" style="max-width:720px">
+  <div style="padding:48px 0 32px">
+    <p style="font-family:var(--font-mono);font-size:0.72rem;color:var(--signal);letter-spacing:0.15em;margin-bottom:12px">LEGAL</p>
+    <h1 style="font-family:var(--font-display);font-weight:800;font-size:clamp(1.8rem,4vw,2.8rem);letter-spacing:-0.03em">Privacy Policy</h1>
+    <p style="color:var(--text-3);font-family:var(--font-mono);font-size:0.75rem;margin-top:8px">Last updated: June 2026</p>
+  </div>
+
+  <div style="border-top:1px solid var(--border);padding-top:40px;display:flex;flex-direction:column;gap:32px;font-size:0.9rem;line-height:1.7;color:var(--text-2)">
+
+    <section>
+      <h2 style="font-family:var(--font-display);font-weight:700;font-size:1rem;color:var(--text);margin-bottom:10px">1. What we collect</h2>
+      <p>NewsCore collects only the email address you voluntarily provide when signing up for the daily digest. No account registration is required to read news.</p>
+      <p style="margin-top:8px">Bookmarks are stored entirely in your browser's localStorage — they never leave your device and we have no access to them.</p>
+    </section>
+
+    <section>
+      <h2 style="font-family:var(--font-display);font-weight:700;font-size:1rem;color:var(--text);margin-bottom:10px">2. How we use your email</h2>
+      <p>Your email is used solely to send the daily AI news digest you subscribed to. We do not sell, share, or rent your email address to any third party.</p>
+    </section>
+
+    <section>
+      <h2 style="font-family:var(--font-display);font-weight:700;font-size:1rem;color:var(--text);margin-bottom:10px">3. Cookies & tracking</h2>
+      <p>NewsCore uses a single session cookie for the admin panel. We do not use advertising cookies, third-party trackers, or analytics that identify individual users.</p>
+    </section>
+
+    <section>
+      <h2 style="font-family:var(--font-display);font-weight:700;font-size:1rem;color:var(--text);margin-bottom:10px">4. Third-party services</h2>
+      <p>We use Google Gemini API to generate article summaries. Article content sent to Gemini is sourced from publicly available RSS feeds. Please review <a href="https://policies.google.com/privacy" target="_blank" rel="noopener" style="color:var(--signal)">Google's Privacy Policy</a> for details.</p>
+      <p style="margin-top:8px">We host on Render and use Neon PostgreSQL for data storage. Both operate under their own privacy policies.</p>
+    </section>
+
+    <section>
+      <h2 style="font-family:var(--font-display);font-weight:700;font-size:1rem;color:var(--text);margin-bottom:10px">5. Data retention</h2>
+      <p>Email addresses are retained until you unsubscribe. Article data is retained indefinitely for historical browsing. You may request deletion of your email by contacting us.</p>
+    </section>
+
+    
+  </div>
+</div>
+{% endblock %}

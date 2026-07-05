@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Saved Stories — NewsCore{% endblock %}
+
+{% block content %}
+<div class="page-container">
+  <div class="category-header">
+    <h1 class="category-title">Saved Stories</h1>
+    <span class="category-accent" style="background:var(--signal)"></span>
+    <p style="color:var(--text-2);margin-top:12px;font-size:0.9rem;">Articles you've bookmarked — stored locally in your browser.</p>
+  </div>
+  <div id="bookmarksContainer">
+    <div class="loading-spinner"><div class="spinner"></div></div>
+  </div>
+</div>
+{% endblock %}

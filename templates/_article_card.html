@@ -1,0 +1,87 @@
+<article class="article-card" data-id="{{ a.id }}">
+
+  <!-- Image -->
+  <div class="card-img-wrap">
+    {% if a.thumbnail_url %}
+    <img src="{{ a.thumbnail_url }}"
+         alt="{{ a.title }}"
+         class="card-img"
+         loading="lazy" />
+    {% else %}
+    <div class="card-img-placeholder">
+      <span class="placeholder-cat">{{ (a.category or 'N')[0] }}</span>
+    </div>
+    {% endif %}
+    <span class="cat-badge cat-badge--corner"
+          style="background: {{ category_colors.get(a.category, '#888') }}">
+      {{ a.category }}
+    </span>
+  </div>
+
+  <!-- Body -->
+  <div class="card-body">
+
+    <!-- Meta row -->
+    <div class="card-meta">
+      <span class="sentiment-tag sentiment-tag--{{ (a.sentiment or 'neutral')|lower }}">
+        {{ a.sentiment or 'Neutral' }}
+      </span>
+      {% if a.is_verified %}
+      <span class="verified-badge verified-badge--sm">✓ Verified</span>
+      {% endif %}
+      <span class="time-ago"
+            data-time="{{ a.published_at.isoformat() if a.published_at else '' }}">
+        {{ a.time_ago() if a.published_at else '' }}
+      </span>
+    </div>
+
+    <!-- Title -->
+    <h3 class="card-title">
+      <a href="{{ url_for('main.article', article_id=a.id, country=selected_country if selected_country is defined else None) }}">{{ a.title }}</a>
+    </h3>
+
+    <!-- AI summary -->
+    {% if a.ai_summary %}
+    <p class="card-summary">{{ a.ai_summary }}</p>
+    {% endif %}
+
+    <!-- Footer -->
+    <div class="card-footer">
+      <span class="source-label">{{ a.source_name }}</span>
+      <div class="card-actions">
+        <button class="icon-btn-sm bookmark-btn"
+                data-id="{{ a.id }}"
+                data-title="{{ a.title }}"
+                aria-label="Bookmark">
+          <svg width="14" height="14" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+          </svg>
+        </button>
+        <button class="icon-btn-sm listen-btn"
+                data-text="{{ a.ai_summary or a.title }}"
+                aria-label="Listen">
+          <svg width="14" height="14" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+          </svg>
+        </button>
+        <button class="icon-btn-sm share-btn"
+                data-url="{{ a.original_url }}"
+                data-title="{{ a.title }}"
+                aria-label="Share">
+          <svg width="14" height="14" viewBox="0 0 24 24"
+               fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="18" cy="5" r="3"/>
+            <circle cx="6" cy="12" r="3"/>
+            <circle cx="18" cy="19" r="3"/>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+  </div>
+</article>

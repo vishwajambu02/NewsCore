@@ -1,0 +1,332 @@
+{% extends "base.html" %}
+
+{% block title %}NewsCore — AI-Powered News{% endblock %}
+
+{% block content %}
+<!-- Leaflet Assets + Popup Modal Styles Embedded Dynamically -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  #hotspotMap {
+    width: 100%;
+    height: 100%;
+    background: #111;
+  }
+  /* Style for pulsing map markers */
+  .map-alert-marker {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .marker-dot {
+    font-size: 1.6rem;
+    animation: pulseAlert 2s infinite;
+  }
+  .marker-label {
+    background: rgba(24, 24, 28, 0.85);
+    color: #fff;
+    font-size: 10px;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid #3d3d44;
+    white-space: nowrap;
+    margin-top: -4px;
+  }
+  @keyframes pulseAlert {
+    0% { transform: scale(1); filter: drop-shadow(0 0 0px rgba(255,0,0,0.7)); }
+    70% { transform: scale(1.2); filter: drop-shadow(0 0 10px rgba(255,0,0,0.4)); }
+    100% { transform: scale(1); filter: drop-shadow(0 0 0px rgba(255,0,0,0)); }
+  }
+  .map-legend {
+    display: flex;
+    gap: 20px;
+    background: #18181c;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    border: 1px solid #2d2d34;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    color: #e2e2e9;
+  }
+  
+  /* MODAL OVERLAY BACKGROUND */
+  .info-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.75);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  /* MODAL BOX */
+  .info-modal {
+    background: #18181c;
+    border: 1px solid #ff6b35;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    padding: 24px;
+    color: #fff;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  }
+  .modal-close {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 1.5rem;
+    cursor: pointer;
+  }
+  .modal-close:hover { color: #fff; }
+  .modal-title { font-size: 1.6rem; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; color: #ff6b35; }
+  .modal-status-badge { padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; background: #2a2a32; }
+  .modal-body { font-size: 1rem; color: #e2e2e9; line-height: 1.5; margin-bottom: 20px; }
+  .headlines-section { border-top: 1px solid #2d2d34; padding-top: 15px; }
+  .headline-link { display: block; color: #8bb2f9; text-decoration: none; margin-bottom: 10px; font-size: 0.95rem; }
+  .headline-link:hover { text-decoration: underline; }
+</style>
+
+<!-- ── Info Details Modal Popup ── -->
+<div class="info-modal-overlay" id="infoModalOverlay">
+  <div class="info-modal">
+    <button class="modal-close" onclick="closeInfoModal()">&times;</button>
+    <div class="modal-title">
+      <span id="modalCountryName">Country Name</span>
+      <span class="modal-status-badge" id="modalAlertBadge">RED ALERT</span>
+    </div>
+    <div class="modal-body" id="modalAlertReason">
+      Why this country has an alert...
+    </div>
+    <div class="headlines-section">
+      <h4 style="margin-bottom: 10px; color: #aaa;">Breaking Headlines:</h4>
+      <div id="modalHeadlinesBox">
+        <!-- Javascript inserts links directly here -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Live ticker ── -->
+<div class="ticker-bar">
+  <span class="ticker-label">LIVE</span>
+  <div class="ticker-track" id="tickerTrack">
+    {% for a in articles[:8] %}
+    <span class="ticker-item">
+      <span class="ticker-cat" style="color: {{ category_colors.get(a.category, '#888') }}">{{ a.category }}</span>
+      {{ a.title }}
+    </span>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="page-container">
+
+  <!-- ── Hero + Sidebar ── -->
+  <section class="hero-section">
+    {% if hero %}
+    <article class="hero-card" data-id="{{ hero.id }}">
+      <div class="hero-bg">
+        {% if hero.thumbnail_url %}
+        <img src="{{ hero.thumbnail_url }}" alt="{{ hero.title }}" class="hero-img" loading="eager" />
+        {% else %}
+        <div class="hero-placeholder"></div>
+        {% endif %}
+        <div class="hero-overlay"></div>
+      </div>
+      <div class="hero-content">
+        <div class="hero-meta">
+          <span class="cat-badge" style="background: {{ category_colors.get(hero.category, '#888') }}">{{ hero.category }}</span>
+          <span class="sentiment-tag sentiment-tag--{{ hero.sentiment|lower }}">{{ hero.sentiment }}</span>
+          {% if hero.is_verified %}<span class="verified-badge">✓ Verified</span>{% endif %}
+        </div>
+        <h1 class="hero-title">{{ hero.title }}</h1>
+        {% if hero.ai_summary %}
+        <p class="hero-summary">{{ hero.ai_summary }}</p>
+        {% endif %}
+        <div class="hero-footer">
+          <span class="source-label">{{ hero.source_name }}</span>
+          <span class="time-ago" data-time="{{ hero.published_at.isoformat() if hero.published_at else '' }}">{{ hero.time_ago() }}</span>
+          <div class="hero-actions">
+            <a href="{{ url_for('main.article', article_id=hero.id) }}" class="btn-read">Read Full Story →</a>
+            <button class="icon-btn bookmark-btn" data-id="{{ hero.id }}" data-title="{{ hero.title }}" aria-label="Bookmark">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+            </button>
+            <button class="icon-btn listen-btn" data-text="{{ hero.ai_summary or hero.title }}" aria-label="Listen">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+            </button>
+            <button class="icon-btn share-btn" data-url="{{ hero.url }}" data-title="{{ hero.title }}" aria-label="Share">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            </button>          </div>
+        </div>
+      </div>
+    </article>
+    {% endif %}
+
+    <!-- Trending sidebar -->
+    <aside class="trending-sidebar">
+      <h2 class="sidebar-title"><span class="live-dot"></span> Trending Now</h2>
+      <ol class="trending-list">
+        {% for item in trending %}
+        <li class="trending-item">
+          <span class="trending-rank">{{ loop.index }}</span>
+          <div class="trending-info">
+            <a href="{{ url_for('main.article', article_id=item.id, country=selected_country) }}" class="trending-title">{{ item.title }}</a>
+            <span class="trending-meta">
+              <span class="cat-dot" style="background: {{ category_colors.get(item.category, '#888') }}"></span>
+              {{ item.source_name }} · {{ item.view_count }} views
+            </span>
+          </div>
+        </li>
+        {% endfor %}
+      </ol>
+      <div class="digest-box">
+        <p class="digest-label">Daily AI digest</p>
+        <form class="digest-form" id="digestForm">
+          <input type="email" placeholder="your@email.com" class="digest-input" required />
+          <button type="submit" class="btn-subscribe">Subscribe</button>
+        </form>
+      </div>
+    </aside>
+  </section>
+
+  <!-- ── World Map Preview ── -->
+  <section class="homepage-map-section" style="display: block; width: 100%; margin-bottom: 40px;">
+    <div class="section-header">
+      <h2>🌍 Live geopolitical hotspots & Alerts</h2>
+      <a href="{{ url_for('main.worldmap') }}" class="open-fullmap-btn">Open Full Map →</a>
+    </div>
+
+    <div class="map-legend">
+      <div class="legend-item">🔴 <b>Red Alert:</b> Critical Conflicts</div>
+      <div class="legend-item">🟡 <b>Yellow Alert:</b> Surveillance & Active Developments</div>
+      <div class="legend-item">🟢 <b>Green Alert:</b> Regional Updates</div>
+    </div>
+    <p style="font-size:0.78rem;color:#888;margin:-4px 0 14px;">
+      Showing tracked hotspot regions. Countries not marked currently have no active alert on record.
+    </p>
+
+    <div class="homepage-map-iframe-wrap" style="width: 100%; height: 450px; border-radius: 12px; overflow: hidden; background: #111; position: relative;">
+      <div id="hotspotMap"></div>
+    </div>
+  </section>
+
+  <!-- ── Article Grid ── -->
+  <section class="grid-section">
+    <div class="grid-header">
+      <h2 class="section-title">Latest Stories</h2>
+      <span class="article-count" id="articleCount">{{ articles|length }} articles</span>
+    </div>
+
+    <div class="article-grid" id="articleGrid">
+      {% for a in articles %}
+      {% include '_article_card.html' %}
+      {% endfor %}
+    </div>
+  </section>
+
+</div>
+
+<!-- Leaflet JavaScript library Core Injection -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// Real articles pulled from the DB, used to match headlines to a hotspot on click
+const rawArticles = [
+  {% for a in hotspot_pool %}
+    {
+      title: {{ (a.title or '')|tojson }},
+      url: {{ url_for('main.article', article_id=a.id)|tojson }},
+      country: {{ (a.country or '')|tojson }}
+    },
+  {% endfor %}
+];
+
+// INITIALIZE WORLD MAP LAYER
+const map = L.map('hotspotMap', { center: [22.0, 15.0], zoom: 2, minZoom: 1.5 });
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+
+// Curated hotspot list. This is intentionally a manually maintained set, not
+// every country — most countries have no active alert, so they simply have
+// no marker. To make this fully dynamic later, swap this array for a DB
+// table (e.g. `alerts`) populated by your Gemini pipeline or an admin panel.
+const alertHotspots = [
+  { name: "Ukraine",     flag: "🇺🇦", coords: [48.3794, 31.1656], level: "RED ALERT",    emoji: "🔴", reason: "Active military conflict zone. Situation updates hourly." },
+  { name: "Israel",      flag: "🇮🇱", coords: [31.0461, 34.8516], level: "RED ALERT",    emoji: "🔴", reason: "High regional tension with active cross-border security incidents." },
+  { name: "Gaza",        flag: "🇵🇸", coords: [31.3547, 34.3088], level: "RED ALERT",    emoji: "🔴", reason: "Ongoing humanitarian and security crisis under close monitoring." },
+  { name: "Sudan",       flag: "🇸🇩", coords: [12.8628, 30.2176], level: "RED ALERT",    emoji: "🔴", reason: "Continued internal armed conflict with large-scale displacement." },
+  { name: "Iran",        flag: "🇮🇷", coords: [32.4279, 53.6880], level: "YELLOW ALERT", emoji: "🟡", reason: "Elevated regional tension and nuclear-policy developments under watch." },
+  { name: "Myanmar",     flag: "🇲🇲", coords: [21.9162, 95.9560], level: "YELLOW ALERT", emoji: "🟡", reason: "Ongoing civil unrest and localized fighting between factions." },
+  { name: "Taiwan",      flag: "🇹🇼", coords: [23.6978, 120.9605], level: "YELLOW ALERT", emoji: "🟡", reason: "Heightened cross-strait military posturing and surveillance activity." },
+  { name: "North Korea", flag: "🇰🇵", coords: [40.3399, 127.5101], level: "YELLOW ALERT", emoji: "🟡", reason: "Increased missile and military activity monitored by regional partners." },
+  { name: "Pakistan",    flag: "🇵🇰", coords: [30.3753, 69.3451], level: "YELLOW ALERT", emoji: "🟡", reason: "Border security incidents and internal political volatility." },
+  { name: "Venezuela",   flag: "🇻🇪", coords: [6.4238, -66.5897], level: "YELLOW ALERT", emoji: "🟡", reason: "Political instability and economic sanctions under active review." },
+  { name: "India",       flag: "🇮🇳", coords: [20.5937, 78.9629], level: "GREEN ALERT",  emoji: "🟢", reason: "Domestic policy shifts under review, no security escalation." },
+  { name: "USA",         flag: "🇺🇸", coords: [37.0902, -95.7129], level: "GREEN ALERT", emoji: "🟢", reason: "Economic and monetary policy updates being tracked." }
+];
+
+const alertColors = {
+  "🔴": { bg: "#721c24", fg: "#f8d7da" },
+  "🟡": { bg: "#856404", fg: "#fff3cd" },
+  "🟢": { bg: "#155724", fg: "#d4edda" }
+};
+
+alertHotspots.forEach(spot => {
+  let customIcon = L.divIcon({
+    html: `<div class="map-alert-marker"><span class="marker-dot">${spot.emoji}</span><span class="marker-label">${spot.name}</span></div>`,
+    className: 'custom-div-icon',
+    iconSize: [60, 40],
+    iconAnchor: [30, 20]
+  });
+
+  let marker = L.marker(spot.coords, { icon: customIcon }).addTo(map);
+
+  marker.on('click', function() {
+    document.getElementById('modalCountryName').innerText = `${spot.flag} ${spot.name}`;
+
+    let badge = document.getElementById('modalAlertBadge');
+    badge.innerText = spot.level;
+    const colors = alertColors[spot.emoji] || alertColors["🟢"];
+    badge.style.background = colors.bg;
+    badge.style.color = colors.fg;
+
+    document.getElementById('modalAlertReason').innerText = spot.reason;
+
+    let matchedHeadlines = rawArticles.filter(a =>
+      (a.country && a.country.toLowerCase() === spot.name.toLowerCase()) ||
+      (a.title && a.title.toLowerCase().includes(spot.name.toLowerCase()))
+    );
+
+    let linksHtml = "";
+    if (matchedHeadlines.length > 0) {
+      matchedHeadlines.slice(0, 4).forEach(h => {
+        linksHtml += `<a href="${h.url}" class="headline-link">➔ ${h.title}</a>`;
+      });
+    } else {
+      linksHtml = `<p style="color:#aaa; font-size:13px; margin-bottom: 8px;">No synced articles in the database for this region yet.</p>`;
+    }
+    document.getElementById('modalHeadlinesBox').innerHTML = linksHtml;
+
+    document.getElementById('infoModalOverlay').style.display = 'flex';
+  });
+});
+
+function closeInfoModal() {
+  document.getElementById('infoModalOverlay').style.display = 'none';
+}
+</script>
+{% endblock %}

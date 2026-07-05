@@ -1,0 +1,433 @@
+/* ══════════════════════════════════════════════════════════
+   NewsCore — splash.css
+   Boot-sequence intro animation (plays once per session)
+   ══════════════════════════════════════════════════════════ */
+
+.splash-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg, #0a0a0f);
+    overflow: hidden;
+}
+
+/* Suppressed instantly on repeat visits within the same session —
+   no flash, no layout cost. */
+html.no-splash .splash-screen {
+    display: none !important;
+}
+
+body.splash-lock {
+    overflow: hidden;
+}
+
+/* ── Background grid drift ───────────────────────────────── */
+.splash-grid {
+    position: absolute;
+    inset: -2px;
+    background-image:
+        linear-gradient(rgba(230, 57, 70, 0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(230, 57, 70, 0.07) 1px, transparent 1px);
+    background-size: 42px 42px;
+    animation: splash-grid-drift 16s linear infinite;
+    mask-image: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.9) 0%, transparent 72%);
+    -webkit-mask-image: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.9) 0%, transparent 72%);
+}
+
+@keyframes splash-grid-drift {
+    from {
+        background-position: 0 0;
+    }
+
+    to {
+        background-position: 42px 42px;
+    }
+}
+
+/* ── Floating signal particles ───────────────────────────── */
+.splash-particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--signal, #E63946);
+    opacity: 0;
+    animation: splash-particle-float 4.5s ease-in-out infinite;
+}
+
+.splash-particle:nth-child(1) {
+    top: 22%;
+    left: 18%;
+    animation-delay: 0s;
+}
+
+.splash-particle:nth-child(2) {
+    top: 68%;
+    left: 12%;
+    animation-delay: 0.6s;
+    background: var(--electric, #457B9D);
+}
+
+.splash-particle:nth-child(3) {
+    top: 30%;
+    left: 82%;
+    animation-delay: 1.1s;
+}
+
+.splash-particle:nth-child(4) {
+    top: 78%;
+    left: 76%;
+    animation-delay: 1.7s;
+    background: var(--gold, #F4A261);
+}
+
+.splash-particle:nth-child(5) {
+    top: 12%;
+    left: 60%;
+    animation-delay: 2.2s;
+    background: var(--electric, #457B9D);
+}
+
+.splash-particle:nth-child(6) {
+    top: 85%;
+    left: 40%;
+    animation-delay: 0.3s;
+}
+
+@keyframes splash-particle-float {
+
+    0%,
+    100% {
+        opacity: 0;
+        transform: translateY(0) scale(0.6);
+    }
+
+    15% {
+        opacity: 0.9;
+    }
+
+    50% {
+        opacity: 0.5;
+        transform: translateY(-22px) scale(1);
+    }
+
+    85% {
+        opacity: 0.9;
+    }
+}
+
+/* ── Horizontal scan line (broadcast feel) ───────────────── */
+.splash-scanline {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--signal, #E63946), transparent);
+    opacity: 0.55;
+    animation: splash-scan 2.6s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+@keyframes splash-scan {
+    0% {
+        top: -2%;
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 0.55;
+    }
+
+    90% {
+        opacity: 0.55;
+    }
+
+    100% {
+        top: 102%;
+        opacity: 0;
+    }
+}
+
+/* ── Core content ─────────────────────────────────────────── */
+.splash-core {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    padding: 0 24px;
+    max-width: 100%;
+}
+
+/* Logo mark + radar ping */
+.splash-logo-wrap {
+    position: relative;
+    width: 84px;
+    height: 84px;
+    display: grid;
+    place-items: center;
+    opacity: 0;
+    transform: scale(0.5) rotate(-12deg);
+    animation: splash-logo-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s forwards;
+}
+
+@keyframes splash-logo-in {
+    to {
+        opacity: 1;
+        transform: scale(1) rotate(0deg);
+    }
+}
+
+.splash-logo-mark {
+    width: 64px;
+    height: 64px;
+    background: var(--signal, #E63946);
+    color: #fff;
+    font-family: var(--font-display, 'Syne', sans-serif);
+    font-weight: 800;
+    font-size: 30px;
+    border-radius: 16px;
+    display: grid;
+    place-items: center;
+    letter-spacing: -1px;
+    position: relative;
+    z-index: 2;
+    box-shadow: 0 0 32px rgba(230, 57, 70, 0.45);
+}
+
+.splash-ping {
+    position: absolute;
+    inset: 0;
+    border-radius: 16px;
+    border: 1.5px solid var(--signal, #E63946);
+    animation: splash-ping-out 2s cubic-bezier(0.2, 0.6, 0.4, 1) 0.7s infinite;
+}
+
+.splash-ping--2 {
+    animation-delay: 1.4s;
+}
+
+@keyframes splash-ping-out {
+    0% {
+        transform: scale(1);
+        opacity: 0.7;
+    }
+
+    100% {
+        transform: scale(2.4);
+        opacity: 0;
+    }
+}
+
+/* Wordmark — letters stagger in */
+.splash-wordmark {
+    display: flex;
+    font-family: var(--font-display, 'Syne', sans-serif);
+    font-weight: 800;
+    font-size: 30px;
+    letter-spacing: -0.5px;
+    color: var(--text-primary, #f0f0f5);
+}
+
+.splash-wordmark span {
+    opacity: 0;
+    display: inline-block;
+    transform: translateY(14px);
+    animation: splash-letter-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Staggered per-letter delay, starting after the logo settles */
+.splash-wordmark span:nth-child(1) {
+    animation-delay: 0.42s;
+}
+
+.splash-wordmark span:nth-child(2) {
+    animation-delay: 0.47s;
+}
+
+.splash-wordmark span:nth-child(3) {
+    animation-delay: 0.52s;
+}
+
+.splash-wordmark span:nth-child(4) {
+    animation-delay: 0.57s;
+}
+
+.splash-wordmark span:nth-child(5) {
+    animation-delay: 0.62s;
+}
+
+.splash-wordmark span:nth-child(6) {
+    animation-delay: 0.67s;
+}
+
+.splash-wordmark span:nth-child(7) {
+    animation-delay: 0.72s;
+}
+
+.splash-wordmark span:nth-child(8) {
+    animation-delay: 0.77s;
+}
+
+.splash-wordmark span:nth-child(9) {
+    animation-delay: 0.82s;
+}
+
+.splash-ai-tag {
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--electric, #457B9D);
+    border: 1px solid var(--electric, #457B9D);
+    border-radius: 4px;
+    padding: 2px 6px;
+    letter-spacing: 0.5px;
+    align-self: flex-start;
+    margin-top: 2px;
+    opacity: 0;
+    animation: splash-tag-flicker 0.5s steps(6, end) 0.95s forwards;
+}
+
+@keyframes splash-tag-flicker {
+    0% {
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 1;
+    }
+
+    20% {
+        opacity: 0.2;
+    }
+
+    35% {
+        opacity: 1;
+    }
+
+    45% {
+        opacity: 0.3;
+    }
+
+    60% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Tagline — typewriter reveal */
+.splash-tagline {
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    color: var(--text-muted, #5a5a72);
+    white-space: nowrap;
+    overflow: hidden;
+    width: 0;
+    animation: splash-typewriter 0.7s steps(26, end) 1.15s forwards;
+}
+
+@keyframes splash-typewriter {
+    to {
+        width: 15.5ch;
+    }
+}
+
+/* Progress bar + percentage */
+.splash-progress-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 6px;
+    opacity: 0;
+    animation: fade-in 0.4s ease 1.3s forwards;
+}
+
+.splash-progress-track {
+    width: 160px;
+    height: 3px;
+    background: var(--border, #1e1e2e);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.splash-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--signal, #E63946), var(--gold, #F4A261));
+    border-radius: 2px;
+    animation: splash-fill 1.25s cubic-bezier(0.45, 0, 0.2, 1) 1.35s forwards;
+}
+
+@keyframes splash-fill {
+    to {
+        width: 100%;
+    }
+}
+
+.splash-progress-pct {
+    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    font-size: 11px;
+    color: var(--text-muted, #5a5a72);
+    min-width: 32px;
+}
+
+/* ── Exit transition: iris wipe ──────────────────────────── */
+.splash-screen.splash-exit {
+    animation: splash-fade-out 0.55s ease 0.05s forwards;
+    pointer-events: none;
+}
+
+.splash-screen.splash-exit .splash-core {
+    animation: splash-core-out 0.5s cubic-bezier(0.6, 0, 0.8, 0.2) forwards;
+}
+
+@keyframes splash-core-out {
+    to {
+        opacity: 0;
+        transform: scale(0.88);
+        filter: blur(6px);
+    }
+}
+
+@keyframes splash-fade-out {
+    to {
+        clip-path: circle(0% at 50% 50%);
+        opacity: 0;
+    }
+}
+
+/* ── Reduced motion: skip straight to instant, no animation ── */
+@media (prefers-reduced-motion: reduce) {
+    .splash-screen {
+        display: none !important;
+    }
+}
+
+/* ── Small phones ─────────────────────────────────────────── */
+@media (max-width: 400px) {
+    .splash-logo-wrap {
+        width: 68px;
+        height: 68px;
+    }
+
+    .splash-logo-mark {
+        width: 52px;
+        height: 52px;
+        font-size: 24px;
+        border-radius: 14px;
+    }
+
+    .splash-wordmark {
+        font-size: 24px;
+    }
+
+    .splash-progress-track {
+        width: 130px;
+    }
+}

@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}{{ article.title }} — NewsCore{% endblock %}
+
+{% block content %}
+<div class="page-container" style="max-width:760px">
+
+  <!-- ── Back link, preserves the country filter that was active on index ── -->
+  <a href="{{ back_url }}" style="display:inline-flex;align-items:center;gap:8px;color:var(--text-secondary);font-size:0.85rem;margin-bottom:24px;font-family:var(--font-mono)">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <line x1="19" y1="12" x2="5" y2="12"/>
+      <polyline points="12 19 5 12 12 5"/>
+    </svg>
+    Back to NewsCore
+  </a>
+
+  <article>
+    <div class="hero-meta" style="margin-bottom:14px">
+      <span class="cat-badge" style="background: {{ category_colors.get(article.category, '#888') }}">{{ article.category }}</span>
+      <span class="sentiment-tag sentiment-tag--{{ article.sentiment|lower }}">{{ article.sentiment }}</span>
+      {% if article.is_verified %}<span class="verified-badge">✓ Verified</span>{% endif %}
+    </div>
+
+    {% if article.thumbnail_url %}
+    <div style="border-radius:var(--radius-lg);overflow:hidden;margin-bottom:24px;aspect-ratio:16/9">
+      <img src="{{ article.thumbnail_url }}" alt="{{ article.title }}" style="width:100%;height:100%;object-fit:cover" />
+    </div>
+    {% endif %}
+
+    <h1 style="font-family:var(--font-display);font-weight:800;font-size:clamp(1.6rem,3.5vw,2.4rem);letter-spacing:-0.02em;line-height:1.2;margin-bottom:14px">
+      {{ article.title }}
+    </h1>
+
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;flex-wrap:wrap">
+      <span class="source-label" style="color:var(--text-secondary)">{{ article.source_name }}</span>
+      <span class="time-ago" data-time="{{ article.published_at.isoformat() if article.published_at else '' }}" style="color:var(--text-muted)">
+        {{ article.time_ago() }}
+      </span>
+      {% if article.view_count %}
+      <span style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">{{ article.view_count }} views</span>
+      {% endif %}
+    </div>
+
+    {% if article.ai_summary %}
+    <div class="ai-summary-panel">
+      <p class="ai-summary-label"><span class="ai-dot"></span> AI Summary</p>
+      <p class="ai-summary-text">{{ article.ai_summary }}</p>
+    </div>
+    {% endif %}
+
+    {% if article.detailed_summary %}
+    <div style="margin-top:32px">
+      <p style="font-family:var(--font-mono);font-size:0.7rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:14px">
+        Detailed Summary
+      </p>
+      <div style="line-height:1.75;font-size:1.02rem;color:var(--text)">
+        {% for para in article.detailed_summary.split('\n\n') %}
+          {% if para.strip() %}
+          <p style="margin-bottom:16px">{{ para.strip() }}</p>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Outbound "Read Original Article" link removed on purpose —
+         this page IS the full article view, we don't want to hand
+         the reader off to the source site in a new tab. -->
+    <div style="display:flex;align-items:center;gap:10px;margin-top:28px;flex-wrap:wrap">
+      <button class="icon-btn bookmark-btn" data-id="{{ article.id }}" data-title="{{ article.title }}" aria-label="Bookmark">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+      </button>
+      <button class="icon-btn listen-btn" data-text="{{ article.ai_summary or article.title }}" aria-label="Listen">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+      </button>
+      <button class="icon-btn share-btn" data-url="{{ request.url }}" data-title="{{ article.title }}" aria-label="Share">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      </button>
+    </div>
+  </article>
+
+  <!-- ── Related articles ── -->
+  {% if related %}
+  <div style="margin-top:56px;border-top:1px solid var(--border);padding-top:32px">
+    <h2 class="section-title" style="margin-bottom:20px">More in {{ article.category }}</h2>
+    <div class="article-grid">
+      {% for a in related %}
+      {% include '_article_card.html' %}
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

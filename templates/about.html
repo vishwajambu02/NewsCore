@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}About NewsCore — AI-Powered News{% endblock %}
+
+{% block content %}
+<div class="page-container" style="max-width:800px">
+
+  <div style="padding:48px 0 32px">
+    <p style="font-family:var(--font-mono);font-size:0.72rem;color:var(--signal);letter-spacing:0.15em;margin-bottom:12px">ABOUT</p>
+    <h1 style="font-family:var(--font-display);font-weight:800;font-size:clamp(2rem,5vw,3.2rem);letter-spacing:-0.03em;line-height:1.1">
+      News, distilled<br>by AI.
+    </h1>
+    <p style="color:var(--text-2);margin-top:20px;font-size:1rem;line-height:1.7;max-width:560px">
+      NewsCore brings together stories from trusted publishers around the world and uses AI to summarize each one in plain language, so you can stay informed without sifting through dozens of sites.
+    </p>
+  </div>
+
+  <div style="border-top:1px solid var(--border);padding-top:40px;display:flex;flex-direction:column;gap:40px">
+
+    <div>
+      <h2 style="font-family:var(--font-display);font-weight:700;font-size:1.2rem;margin-bottom:12px">What you get</h2>
+      <div style="display:flex;flex-direction:column;gap:20px">
+        {% for step in [
+          ('Plain-language summaries', 'Every story comes with a short, AI-written summary, so you can get the gist in seconds and decide what\'s worth reading in full.'),
+          ('Sentiment at a glance', 'Each article is tagged Positive, Neutral, or Negative, giving you a quick read on tone before you click in.'),
+          ('Coverage from around the world', 'Filter news by country — from your own region to global hotspots — across 195 countries.'),
+          ('Verified sources', 'Articles from established publishers like BBC, Reuters, and Al Jazeera carry a Verified Publisher badge, so you know where your news is coming from.'),
+          ('Always current', 'Stories refresh automatically throughout the day, so the homepage reflects what\'s happening right now.'),
+        ] %}
+        <div style="display:flex;gap:20px;align-items:flex-start">
+          <span style="color:var(--signal);flex-shrink:0;line-height:1.4;font-size:1.1rem">●</span>
+          <div>
+            <strong style="display:block;margin-bottom:4px">{{ step[0] }}</strong>
+            <p style="color:var(--text-2);font-size:0.875rem;line-height:1.6">{{ step[1] }}</p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div>
+      <h2 style="font-family:var(--font-display);font-weight:700;font-size:1.2rem;margin-bottom:12px">What NewsCore doesn't do</h2>
+      <ul style="list-style:none;display:flex;flex-direction:column;gap:8px">
+        {% for item in [
+          'We don\'t write or alter original news content — every summary links back to the source.',
+          'We don\'t track you or sell your data.',
+          'We don\'t serve ads.',
+          'AI summaries may occasionally contain errors — always check the original article for anything important.',
+        ] %}
+        <li style="display:flex;gap:10px;align-items:flex-start;color:var(--text-2);font-size:0.875rem">
+          <span style="color:var(--signal);flex-shrink:0;margin-top:2px">✕</span>
+          {{ item }}
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div>
+      <h2 style="font-family:var(--font-display);font-weight:700;font-size:1.2rem;margin-bottom:12px">Who it's for</h2>
+      <p style="color:var(--text-2);font-size:0.875rem;line-height:1.7">
+        NewsCore is built for people who want to stay informed without the time sink — quick summaries, clear sentiment, and a world map view for anyone who wants the bigger geopolitical picture alongside their daily headlines.
+      </p>
+    </div>
+
+  
+     
+
+  </div>
+
+</div>
+{% endblock %}

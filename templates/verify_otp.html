@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Verify Code — NewsCore{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-header">
+      <span class="logo-mark">N</span>
+      <h1>Check your email</h1>
+      <p class="auth-sub">We sent a 6-digit code to <strong>{{ email }}</strong></p>
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for cat, msg in messages %}
+          <div class="flash flash--{{ cat }}">{{ msg }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('auth.verify') }}" class="auth-form" id="otpForm">
+      <input type="hidden" name="purpose" value="{{ purpose }}" />
+      <label class="auth-label">Verification Code</label>
+      <input type="text" name="code" id="otpInput" class="auth-input auth-input--otp" required
+             maxlength="6" pattern="\d{6}" placeholder="000000" autofocus
+             inputmode="numeric" autocomplete="one-time-code" />
+      <button type="submit" class="btn-auth-submit" id="otpSubmitBtn">Verify & Continue</button>
+    </form>
+
+    <p class="auth-switch">Didn't get it? <a href="{{ url_for('auth.login') if purpose == 'login' else url_for('auth.signup') }}">Try again</a></p>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const input = document.getElementById('otpInput');
+    const form = document.getElementById('otpForm');
+    const btn = document.getElementById('otpSubmitBtn');
+    let submitted = false;
+
+    input.addEventListener('input', function () {
+      // Only allow digits
+      this.value = this.value.replace(/\D/g, '');
+
+      if (this.value.length === 6 && !submitted) {
+        submitted = true;
+        btn.textContent = 'Verifying…';
+        btn.disabled = true;
+        form.submit();
+      }
+    });
+
+    // WebOTP API — auto-fills from SMS if the code ever gets sent by SMS in future
+    if ('OTPCredential' in window) {
+      navigator.credentials.get({
+        otp: { transport: ['sms'] },
+        signal: new AbortController().signal
+      }).then(otp => {
+        if (otp && otp.code) {
+          input.value = otp.code;
+          input.dispatchEvent(new Event('input'));
+        }
+      }).catch(() => {});
+    }
+  })();
+</script>
+{% endblock %}

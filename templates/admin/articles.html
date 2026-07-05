@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Manage Articles — NewsCore Admin{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+  <aside class="admin-sidebar">
+    <div style="padding:0 20px 20px;border-bottom:1px solid var(--border);margin-bottom:16px">
+      <span style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-3)">ADMIN PANEL</span>
+    </div>
+    <a href="{{ url_for('admin.dashboard') }}" class="admin-nav-link">📊 Dashboard</a>
+    <a href="{{ url_for('admin.articles') }}"  class="admin-nav-link active">📰 Articles</a>
+    <a href="{{ url_for('admin.sources') }}"   class="admin-nav-link">📡 RSS Sources</a>
+    <div style="padding:20px;margin-top:auto">
+      <a href="{{ url_for('admin.logout') }}" style="font-size:0.8rem;color:var(--text-3)">Logout</a>
+    </div>
+  </aside>
+
+  <main class="admin-main">
+    <h1 style="font-family:var(--font-display);font-weight:800;font-size:1.5rem;margin-bottom:24px">Articles</h1>
+
+    <!-- Filters -->
+    <form method="GET" style="display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap">
+      <input type="text" name="q" placeholder="Search title…" value="{{ query }}"
+             style="flex:1;min-width:200px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font:inherit;outline:none" />
+      <select name="category" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font:inherit;outline:none">
+        <option value="">All Categories</option>
+        {% for c in categories %}
+        <option value="{{ c }}" {% if active_category == c %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn-read">Filter</button>
+    </form>
+
+    <!-- Table -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
+      <table style="width:100%;border-collapse:collapse;font-size:0.82rem">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border);background:var(--ink-2)">
+            <th style="text-align:left;padding:12px 16px;color:var(--text-3)">Title</th>
+            <th style="text-align:left;padding:12px;color:var(--text-3)">Category</th>
+            <th style="text-align:left;padding:12px;color:var(--text-3)">Sentiment</th>
+            <th style="text-align:left;padding:12px;color:var(--text-3)">Source</th>
+            <th style="text-align:right;padding:12px 16px;color:var(--text-3)">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in articles.items %}
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:10px 16px;max-width:360px">
+              <a href="{{ a.original_url }}" target="_blank" style="color:var(--text);font-weight:500">
+                {{ a.title[:70] }}{% if a.title|length > 70 %}…{% endif %}
+              </a>
+              {% if a.admin_edited %}<span style="font-size:0.65rem;color:var(--gold);margin-left:6px">edited</span>{% endif %}
+            </td>
+            <td style="padding:10px 12px"><span class="cat-badge" style="background:{{ category_colors.get(a.category,'#888') if category_colors is defined else '#888' }}">{{ a.category }}</span></td>
+            <td style="padding:10px 12px"><span class="sentiment-tag sentiment-tag--{{ a.sentiment|lower }}">{{ a.sentiment }}</span></td>
+            <td style="padding:10px 12px;color:var(--text-2)">{{ a.source_name }}</td>
+            <td style="padding:10px 16px;text-align:right;white-space:nowrap">
+              <a href="{{ url_for('admin.edit_article', article_id=a.id) }}" style="color:var(--gold);margin-right:12px;font-size:0.78rem">Edit</a>
+              <form method="POST" action="{{ url_for('admin.delete_article', article_id=a.id) }}" style="display:inline"
+                    onsubmit="return confirm('Delete this article?')">
+                <button type="submit" style="color:var(--signal);font-size:0.78rem">Delete</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if articles.pages > 1 %}
+    <nav style="display:flex;justify-content:center;gap:8px;margin-top:24px;flex-wrap:wrap">
+      {% if articles.has_prev %}
+      <a href="{{ url_for('admin.articles', page=articles.prev_num, category=active_category, q=query) }}" class="btn-read">← Prev</a>
+      {% endif %}
+      <span style="display:flex;align-items:center;font-family:var(--font-mono);font-size:0.8rem;color:var(--text-2)">
+        Page {{ articles.page }} / {{ articles.pages }}
+      </span>
+      {% if articles.has_next %}
+      <a href="{{ url_for('admin.articles', page=articles.next_num, category=active_category, q=query) }}" class="btn-read">Next →</a>
+      {% endif %}
+    </nav>
+    {% endif %}
+  </main>
+</div>
+{% endblock %}

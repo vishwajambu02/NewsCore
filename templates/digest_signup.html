@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block title %}Daily AI Digest — NewsCore{% endblock %}
+
+{% block content %}
+<div class="page-container" style="max-width:560px;padding-top:80px;padding-bottom:80px">
+
+  <!-- Header -->
+  <div style="text-align:center;margin-bottom:48px">
+    <span style="display:inline-block;font-family:var(--font-mono);font-size:0.7rem;color:var(--signal);letter-spacing:0.15em;margin-bottom:12px">DAILY DIGEST</span>
+    <h1 style="font-family:var(--font-display);font-weight:800;font-size:clamp(2rem,5vw,3rem);letter-spacing:-0.03em;line-height:1.1">
+      The news, in<br>your inbox.
+    </h1>
+    <p style="color:var(--text-2);margin-top:16px;font-size:0.95rem;line-height:1.7">
+      Every morning, NewsCore sends you an AI-summarized digest of the top stories in the categories you follow. No noise. No ads. Just signal.
+    </p>
+  </div>
+
+  <!-- Signup card -->
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:36px">
+
+    <div id="signupForm">
+      <!-- Email -->
+      <div style="margin-bottom:20px">
+        <label style="display:block;font-size:0.78rem;font-weight:600;color:var(--text-2);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.06em">
+          Your Email
+        </label>
+        <input type="email" id="digestEmail" placeholder="you@example.com" required
+               style="width:100%;background:var(--ink-2);border:1px solid var(--border);border-radius:8px;
+                      padding:11px 14px;color:var(--text);font:inherit;font-size:0.9rem;outline:none;
+                      transition:border-color 0.2s"
+               onfocus="this.style.borderColor='var(--signal)'"
+               onblur="this.style.borderColor='var(--border)'" />
+      </div>
+
+      <!-- Category picks -->
+      <div style="margin-bottom:28px">
+        <label style="display:block;font-size:0.78rem;font-weight:600;color:var(--text-2);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.06em">
+          Categories to follow
+        </label>
+        <div style="display:flex;flex-wrap:wrap;gap:8px" id="catPills">
+          {% set colors = {
+            'World':'#E63946','Technology':'#457B9D','Sports':'#2DC653',
+            'Science':'#7B2FBE','Business':'#F4A261','Entertainment':'#E76F51','Health':'#06D6A0'
+          } %}
+          {% for cat in ['World','Technology','Sports','Science','Business','Entertainment','Health'] %}
+          <button type="button"
+                  class="digest-cat-pill"
+                  data-cat="{{ cat }}"
+                  data-color="{{ colors[cat] }}"
+                  style="padding:6px 16px;border-radius:20px;font-size:0.78rem;font-weight:500;
+                         cursor:pointer;border:1px solid var(--border);color:var(--text-2);
+                         background:transparent;transition:all 0.15s">
+            {{ cat }}
+          </button>
+          {% endfor %}
+        </div>
+        <p style="font-size:0.72rem;color:var(--text-3);margin-top:8px">Select at least one category</p>
+      </div>
+
+      <!-- Submit -->
+      <button id="digestSubmitBtn" class="btn-read"
+              style="width:100%;text-align:center;display:block;padding:12px;font-size:0.9rem">
+        Subscribe to Digest →
+      </button>
+
+      <p style="text-align:center;font-size:0.72rem;color:var(--text-3);margin-top:16px">
+        No spam. Unsubscribe any time. We respect your privacy.
+      </p>
+    </div>
+
+    <!-- Success state (hidden) -->
+    <div id="signupSuccess" style="display:none;text-align:center;padding:20px 0">
+      <div style="font-size:2.5rem;margin-bottom:16px">✓</div>
+      <h2 style="font-family:var(--font-display);font-weight:800;font-size:1.4rem;margin-bottom:8px">You're in!</h2>
+      <p style="color:var(--text-2);font-size:0.9rem">
+        Your first digest arrives tomorrow morning.<br>
+        Check your inbox for a confirmation.
+      </p>
+      <a href="/" class="btn-read" style="display:inline-block;margin-top:24px">← Read Today's News</a>
+    </div>
+
+  </div>
+
+  <!-- What to expect -->
+  <div style="margin-top:48px;display:flex;flex-direction:column;gap:20px">
+    <p style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-3);text-align:center;letter-spacing:0.1em">WHAT YOU GET</p>
+    {% for item in [
+      ('📰', 'Top 5 stories', 'AI-summarized headlines from your chosen categories.'),
+      ('💡', 'Sentiment snapshot', 'A quick read on whether the day\'s news skews positive or negative.'),
+      ('🔗', 'Direct links', 'One click to the original source — no paywalls added by us.'),
+    ] %}
+    <div style="display:flex;gap:16px;align-items:flex-start">
+      <span style="font-size:1.2rem;flex-shrink:0">{{ item[0] }}</span>
+      <div>
+        <strong style="font-size:0.875rem">{{ item[1] }}</strong>
+        <p style="color:var(--text-2);font-size:0.82rem;margin-top:2px">{{ item[2] }}</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  const selected = new Set(['World']);  // default
+
+  document.querySelectorAll('.digest-cat-pill').forEach(pill => {
+    const cat   = pill.dataset.cat;
+    const color = pill.dataset.color;
+
+    // Pre-select World
+    if (cat === 'World') activatePill(pill, color);
+
+    pill.addEventListener('click', () => {
+      if (selected.has(cat)) {
+        selected.delete(cat);
+        deactivatePill(pill);
+      } else {
+        selected.add(cat);
+        activatePill(pill, color);
+      }
+    });
+  });
+
+  function activatePill(pill, color) {
+    pill.style.background   = color;
+    pill.style.borderColor  = color;
+    pill.style.color        = '#fff';
+  }
+  function deactivatePill(pill) {
+    pill.style.background   = 'transparent';
+    pill.style.borderColor  = 'var(--border)';
+    pill.style.color        = 'var(--text-2)';
+  }
+
+  document.getElementById('digestSubmitBtn').addEventListener('click', async () => {
+    const email = document.getElementById('digestEmail').value.trim();
+    if (!email || !email.includes('@')) {
+      window.showToast?.('Please enter a valid email.', 'error');
+      return;
+    }
+    if (selected.size === 0) {
+      window.showToast?.('Pick at least one category.', 'error');
+      return;
+    }
+
+    const btn = document.getElementById('digestSubmitBtn');
+    btn.textContent = 'Subscribing…';
+    btn.disabled    = true;
+
+    try {
+      const res  = await fetch('/api/subscribe', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ email, categories: [...selected] }),
+      });
+      const data = await res.json();
+
+      if (res.ok || res.status === 200) {
+        document.getElementById('signupForm').style.display    = 'none';
+        document.getElementById('signupSuccess').style.display = 'block';
+      } else {
+        window.showToast?.(data.error || 'Something went wrong.', 'error');
+        btn.textContent = 'Subscribe to Digest →';
+        btn.disabled    = false;
+      }
+    } catch {
+      window.showToast?.('Network error. Try again.', 'error');
+      btn.textContent = 'Subscribe to Digest →';
+      btn.disabled    = false;
+    }
+  });
+</script>
+{% endblock %}

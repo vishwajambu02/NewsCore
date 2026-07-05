@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Users — Admin — NewsCore{% endblock %}
+{% block body_class %}admin-body{% endblock %}
+
+{% block content %}
+<div class="admin-layout">
+
+  <!-- Sidebar -->
+  <aside class="admin-sidebar">
+    <div style="padding:0 20px 20px;border-bottom:1px solid var(--border);margin-bottom:16px">
+      <span style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-3)">ADMIN PANEL</span>
+    </div>
+    <a href="{{ url_for('admin.dashboard') }}" class="admin-nav-link">📊 Dashboard</a>
+    <a href="{{ url_for('admin.articles') }}" class="admin-nav-link">📰 Articles</a>
+    <a href="{{ url_for('admin.sources') }}"  class="admin-nav-link">📡 RSS Sources</a>
+    <a href="{{ url_for('admin.users') }}"    class="admin-nav-link active">👤 Users</a>
+    <a href="{{ url_for('admin.subscribers') }}" class="admin-nav-link">✉️ Subscribers</a>
+    <div style="margin-top:auto;padding:20px">
+      <form method="POST" action="{{ url_for('admin.fetch_now') }}">
+        <button type="submit" class="btn-read" style="width:100%;text-align:center">⟳ Fetch Now</button>
+      </form>
+      <a href="{{ url_for('admin.logout') }}" style="display:block;margin-top:12px;text-align:center;font-size:0.8rem;color:var(--text-3)">Logout</a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="admin-main">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+      <h1 style="font-family:var(--font-display);font-weight:800;font-size:1.5rem">
+        Users
+        <span style="font-size:0.9rem;font-weight:500;color:var(--text-3)">({{ total_users }} total, {{ verified_users }} verified)</span>
+      </h1>
+
+      <form method="GET" action="{{ url_for('admin.users') }}" style="display:flex;gap:8px">
+        <input type="text" name="q" value="{{ query }}" placeholder="Search name, email, or phone…"
+               style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:0.85rem;min-width:220px" />
+        <button type="submit" class="btn-read">Search</button>
+      </form>
+    </div>
+
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;overflow-x:auto">
+      {% if users.items %}
+      <table style="width:100%;border-collapse:collapse;font-size:0.85rem">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border)">
+            <th style="text-align:left;padding:10px 8px;color:var(--text-3)">Name</th>
+            <th style="text-align:left;padding:10px 8px;color:var(--text-3)">Email</th>
+            <th style="text-align:left;padding:10px 8px;color:var(--text-3)">Phone</th>
+            <th style="text-align:left;padding:10px 8px;color:var(--text-3)">Verified</th>
+            <th style="text-align:right;padding:10px 8px;color:var(--text-3)">Joined</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in users.items %}
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:10px 8px;color:var(--text)">{{ u.name or '—' }}</td>
+            <td style="padding:10px 8px;color:var(--text-2)">{{ u.email }}</td>
+            <td style="padding:10px 8px;color:var(--text-2);font-family:var(--font-mono);font-size:0.8rem">{{ u.phone or '—' }}</td>
+            <td style="padding:10px 8px">
+              {% if u.is_verified %}
+              <span style="color:#06d6a0">✓ Verified</span>
+              {% else %}
+              <span style="color:var(--text-3)">— Unverified</span>
+              {% endif %}
+            </td>
+            <td style="padding:10px 8px;text-align:right;color:var(--text-3);font-family:var(--font-mono);font-size:0.8rem">
+              {{ u.created_at.strftime('%d %b %Y, %H:%M') }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <!-- Pagination -->
+      <div style="display:flex;justify-content:center;gap:8px;margin-top:20px">
+        {% if users.has_prev %}
+        <a href="{{ url_for('admin.users', page=users.prev_num, q=query) }}" class="btn-read">← Prev</a>
+        {% endif %}
+        <span style="padding:8px 12px;color:var(--text-3);font-size:0.85rem">Page {{ users.page }} of {{ users.pages }}</span>
+        {% if users.has_next %}
+        <a href="{{ url_for('admin.users', page=users.next_num, q=query) }}" class="btn-read">Next →</a>
+        {% endif %}
+      </div>
+
+      {% else %}
+      <p style="color:var(--text-3);font-size:0.85rem;text-align:center;padding:24px 0">No users found.</p>
+      {% endif %}
+    </div>
+  </main>
+</div>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}404 — Page Not Found — NewsCore{% endblock %}
+
+{% block content %}
+<div style="min-height:70vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:40px;">
+  <div>
+    <p style="font-family:var(--font-mono);font-size:0.75rem;color:var(--signal);letter-spacing:0.15em;margin-bottom:16px">ERROR 404</p>
+    <h1 style="font-family:var(--font-display);font-weight:800;font-size:clamp(3rem,10vw,6rem);letter-spacing:-0.04em;line-height:1">
+      Story<br>Not Found
+    </h1>
+    <p style="color:var(--text-2);margin:20px 0 32px;font-size:1rem;max-width:400px;margin-left:auto;margin-right:auto">
+      This page has gone off the grid. Maybe it was deleted, moved, or never existed.
+    </p>
+    <a href="/" class="btn-read">← Back to NewsCore</a>
+  </div>
+</div>
+{% endblock %}
