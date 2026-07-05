@@ -245,7 +245,15 @@ button {
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-shrink: 0;
+  flex-shrink: 1;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  max-width: 100%;
+}
+
+.nav-controls::-webkit-scrollbar {
+  display: none;
 }
 
 .icon-btn {
@@ -2279,8 +2287,13 @@ button {
   }
 
   .icon-btn {
-    width: 40px;
-    height: 40px;
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+  }
+
+  .nav-controls {
+    gap: 2px;
   }
 
   .page-container {
