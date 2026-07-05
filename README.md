@@ -175,7 +175,7 @@ NewsCore is designed to deploy easily on **[Render](https://render.com)**:
 
 ## 👤 Author
 
-**Vishwa Jambucha**
+**Vishwa Jambu**
 B.Tech CSE, Parul University
 
 - GitHub: [@vishwajambu02](https://github.com/vishwajambu02)
