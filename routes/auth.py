@@ -225,25 +225,7 @@ def digest():
         category_colors=Config.CATEGORY_COLORS,
     )
 
-# -- TEMPORARY: one-time password reset for legacy admin account ---
-# DELETE THIS ROUTE after using it once.
 
-@auth_bp.route('/one-time-reset-xk29')
-def one_time_reset_xk29():
-    secret = request.args.get('key', '')
-    if secret != 'nc-reset-2026-temp':
-        return 'Not found', 404
-
-    email = 'vishwajambu66@gmail.com'
-    new_password = 'ChangeThisNow123'
-
-    user = User.query.filter_by(email=email).first()
-    if not user:
-        return f'No user found for {email}', 404
-
-    user.set_password(new_password)
-    db.session.commit()
-    return f'Password reset for {email}. Log in with the new password, then delete this route.'
 
 # -- Unsubscribe (unchanged) ---------------------------------------
 
