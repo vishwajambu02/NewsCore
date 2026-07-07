@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Verify Code — NewsCore{% endblock %}
+{% block title %}Verify Email — NewsCore{% endblock %}
 
 {% block content %}
 <div class="auth-page">
@@ -19,8 +19,7 @@
       {% endif %}
     {% endwith %}
 
-    <form method="POST" action="{{ url_for('auth.verify') }}" class="auth-form" id="otpForm">
-      <input type="hidden" name="purpose" value="{{ purpose }}" />
+    <form method="POST" action="{{ url_for('auth.verify_email') }}" class="auth-form" id="otpForm">
       <label class="auth-label">Verification Code</label>
       <input type="text" name="code" id="otpInput" class="auth-input auth-input--otp" required
              maxlength="6" pattern="\d{6}" placeholder="000000" autofocus
@@ -28,7 +27,11 @@
       <button type="submit" class="btn-auth-submit" id="otpSubmitBtn">Verify & Continue</button>
     </form>
 
-    <p class="auth-switch">Didn't get it? <a href="{{ url_for('auth.login') if purpose == 'login' else url_for('auth.signup') }}">Try again</a></p>
+    <p class="auth-switch">
+      Didn't get it?
+      <a href="#" id="resendLink">Resend code</a>
+      or <a href="{{ url_for('auth.signup') }}">start over</a>
+    </p>
   </div>
 </div>
 
@@ -37,10 +40,10 @@
     const input = document.getElementById('otpInput');
     const form = document.getElementById('otpForm');
     const btn = document.getElementById('otpSubmitBtn');
+    const resendLink = document.getElementById('resendLink');
     let submitted = false;
 
     input.addEventListener('input', function () {
-      // Only allow digits
       this.value = this.value.replace(/\D/g, '');
 
       if (this.value.length === 6 && !submitted) {
@@ -51,7 +54,6 @@
       }
     });
 
-    // WebOTP API — auto-fills from SMS if the code ever gets sent by SMS in future
     if ('OTPCredential' in window) {
       navigator.credentials.get({
         otp: { transport: ['sms'] },
@@ -63,6 +65,17 @@
         }
       }).catch(() => {});
     }
+
+    resendLink.addEventListener('click', function (e) {
+      e.preventDefault();
+      resendLink.textContent = 'Sending…';
+      fetch("{{ url_for('auth.resend_otp') }}", { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+          resendLink.textContent = data.ok ? 'Code resent' : 'Could not resend';
+        })
+        .catch(() => { resendLink.textContent = 'Could not resend'; });
+    });
   })();
 </script>
 {% endblock %}
