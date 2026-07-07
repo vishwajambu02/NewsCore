@@ -8,7 +8,7 @@
     <div class="auth-header">
       <span class="logo-mark">N</span>
       <h1>Create your own account</h1>
-      <p class="auth-sub">Set up your profile and choose your own password</p>
+      <p class="auth-sub">We'll verify your email with a quick code, then you'll choose your own password</p>
     </div>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -29,13 +29,7 @@
       <label class="auth-label">Email</label>
       <input type="email" name="email" class="auth-input" required placeholder="you@example.com" autocomplete="username" />
 
-      <label class="auth-label">Password</label>
-      <input type="password" name="password" class="auth-input" required minlength="6" placeholder="At least 6 characters" autocomplete="new-password" />
-
-      <label class="auth-label">Confirm Password</label>
-      <input type="password" name="confirm_password" class="auth-input" required minlength="6" placeholder="Re-enter your password" autocomplete="new-password" />
-
-      <button type="submit" class="btn-auth-submit">Create Account</button>
+      <button type="submit" class="btn-auth-submit">Send Verification Code</button>
     </form>
 
     <p class="auth-switch">Already have an account? <a href="{{ url_for('auth.login') }}">Sign In</a></p>
