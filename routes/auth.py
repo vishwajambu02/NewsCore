@@ -13,6 +13,12 @@ Login is plain email + password, no OTP:
 
   /login -> username is the account email, password is whatever was set
             in step 3 above.
+
+Password recovery:
+
+  /change-password  -> logged-in users change their own password.
+  /forgot-password   -> request an OTP code to email.
+  /reset-password    -> verify that OTP + set a new password.
 """
 
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify, make_response
@@ -215,6 +221,114 @@ def logout():
     return redirect(url_for('main.index'))
 
 
+# -- Change password (for logged-in users) --------------------------
+
+@auth_bp.route('/change-password', methods=['GET', 'POST'])
+def change_password():
+    user_id = session.get('user_id')
+    if not user_id:
+        return redirect(url_for('auth.login'))
+
+    user = User.query.get(user_id)
+
+    if request.method == 'GET':
+        return render_template('change_password.html',
+                               categories=Config.CATEGORIES,
+                               category_colors=Config.CATEGORY_COLORS)
+
+    current_password = request.form.get('current_password', '')
+    new_password     = request.form.get('new_password', '')
+    confirm_password = request.form.get('confirm_password', '')
+
+    if not user.check_password(current_password):
+        flash('Current password is incorrect.', 'error')
+        return redirect(url_for('auth.change_password'))
+
+    if len(new_password) < 6:
+        flash('New password must be at least 6 characters.', 'error')
+        return redirect(url_for('auth.change_password'))
+
+    if new_password != confirm_password:
+        flash('New passwords do not match.', 'error')
+        return redirect(url_for('auth.change_password'))
+
+    user.set_password(new_password)
+    db.session.commit()
+    flash('Password updated successfully.', 'success')
+    return redirect(url_for('main.index'))
+
+
+# -- Forgot password: request OTP -----------------------------------
+
+@auth_bp.route('/forgot-password', methods=['GET', 'POST'])
+def forgot_password():
+    if request.method == 'GET':
+        return render_template('forgot_password.html',
+                               categories=Config.CATEGORIES,
+                               category_colors=Config.CATEGORY_COLORS)
+
+    email = request.form.get('email', '').strip().lower()
+    user = User.query.filter_by(email=email).first()
+
+    if not user:
+        flash('No account found with that email.', 'error')
+        return redirect(url_for('auth.forgot_password'))
+
+    otp = OTPCode.generate(email, purpose='reset')
+    sent = send_otp_email(email, otp.code, purpose='reset')
+    if not sent:
+        flash('Could not send code. Try again shortly.', 'error')
+        return redirect(url_for('auth.forgot_password'))
+
+    session['reset_email'] = email
+    return redirect(url_for('auth.reset_password'))
+
+
+# -- Forgot password: verify OTP + set new password ------------------
+
+@auth_bp.route('/reset-password', methods=['GET', 'POST'])
+def reset_password():
+    email = session.get('reset_email')
+    if not email:
+        return redirect(url_for('auth.forgot_password'))
+
+    if request.method == 'GET':
+        return render_template('reset_password.html',
+                               email=email,
+                               categories=Config.CATEGORIES,
+                               category_colors=Config.CATEGORY_COLORS)
+
+    code             = request.form.get('code', '').strip()
+    new_password     = request.form.get('new_password', '')
+    confirm_password = request.form.get('confirm_password', '')
+
+    otp = (OTPCode.query
+           .filter_by(email=email, code=code, purpose='reset', used=False)
+           .order_by(OTPCode.created_at.desc())
+           .first())
+
+    if not otp or not otp.is_valid():
+        flash('Invalid or expired code.', 'error')
+        return redirect(url_for('auth.reset_password'))
+
+    if len(new_password) < 6:
+        flash('Password must be at least 6 characters.', 'error')
+        return redirect(url_for('auth.reset_password'))
+
+    if new_password != confirm_password:
+        flash('Passwords do not match.', 'error')
+        return redirect(url_for('auth.reset_password'))
+
+    otp.used = True
+    user = User.query.filter_by(email=email).first()
+    user.set_password(new_password)
+    db.session.commit()
+
+    session.pop('reset_email', None)
+    flash('Password reset. You can log in now.', 'success')
+    return redirect(url_for('auth.login'))
+
+
 # -- Digest signup page (unchanged) ------------------------------
 
 @auth_bp.route('/digest')
@@ -225,23 +339,6 @@ def digest():
         category_colors=Config.CATEGORY_COLORS,
     )
 
-# -- TEMPORARY: one-time password reset for legacy admin account ---
-@auth_bp.route('/one-time-reset-xk29')
-def one_time_reset_xk29():
-    secret = request.args.get('key', '')
-    if secret != 'nc-reset-2026-temp':
-        return 'Not found', 404
-
-    email = 'vishwajambu66@gmail.com'
-    new_password = 'ChangeThisNow123'
-
-    user = User.query.filter_by(email=email).first()
-    if not user:
-        return f'No user found for {email}', 404
-
-    user.set_password(new_password)
-    db.session.commit()
-    return f'Password reset for {email}. Log in with the new password, then delete this route.'
 
 # -- Unsubscribe (unchanged) ---------------------------------------
 
