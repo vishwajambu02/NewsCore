@@ -1,227 +1,184 @@
 <div align="center">
 
-# 📰 NewsCore
+# 🧠 NewsCore
 
-### AI-Powered News Aggregator
+### AI-Summarized News. Real-Time Sentiment. Verified Publishers.
 
-*Real-time news from around the world, summarized and understood by AI.*
+**A full-stack, AI-powered news aggregation platform that reads the internet so you don't have to.**
 
-[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![Flask](https://img.shields.io/badge/Flask-2.x-000000?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
-[![PostgreSQL](https://img.shields.io/badge/Neon-PostgreSQL-336791?style=for-the-badge&logo=postgresql&logoColor=white)](https://neon.tech/)
-[![Gemini AI](https://img.shields.io/badge/Google-Gemini%20AI-8E75B2?style=for-the-badge&logo=google-gemini&logoColor=white)](https://ai.google.dev/)
-[![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
+[![Live Demo](https://img.shields.io/badge/🔴_LIVE-newscore--tejh.onrender.com-0a0a0f?style=for-the-badge)](https://newscore-tejh.onrender.com/)
+[![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![Flask](https://img.shields.io/badge/Flask-Blueprints-000000?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com)
+[![PostgreSQL](https://img.shields.io/badge/Neon-PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://neon.tech)
+[![Gemini AI](https://img.shields.io/badge/Google-Gemini_AI-8E75B2?style=for-the-badge&logo=googlegemini&logoColor=white)](https://ai.google.dev)
 
-[Live Demo](https://newscore-tejh.onrender.com/) · [Report Bug](../../issues) · [Request Feature](../../issues)
+[**🚀 View Live App**](https://newscore-tejh.onrender.com/) · [**🐛 Report Bug**](../../issues) · [**✨ Request Feature**](../../issues)
 
 </div>
 
 ---
 
-## 📖 About
+## 🌍 What is NewsCore?
 
-**NewsCore** is a full-stack news aggregation platform that pulls stories from RSS feeds around the world and runs each one through **Google Gemini AI** to generate concise summaries, detailed explainers, sentiment analysis, and automatic categorization — so you get the story, not just the headline.
+NewsCore is a **live, production-deployed news intelligence platform** that ingests articles from trusted global publishers, runs them through **Google Gemini AI** for summarization and sentiment analysis, and serves them through a sleek, dark-themed reading experience — complete with a **live geopolitical hotspot map**, country-level filtering across **195 countries**, and a full authentication system built from the ground up.
 
-Built solo as a deep-dive into full-stack development: real-time data pipelines, AI integration, passwordless authentication, and production deployment.
+This isn't a tutorial clone. It's a real system solving real engineering problems: scheduled scraping pipelines, AI rate-limit management, database persistence across ephemeral deployments, and secure multi-flow authentication — all running live on Render.
+
+> 📌 **Built solo** by [@vishwajambu02](https://github.com/vishwajambu02) as a full-stack engineering deep-dive — from raw HTML scraping to AI pipelines to production auth systems.
 
 ---
 
 ## ✨ Features
 
-### 🤖 AI-Powered
-- **Smart summaries** — a short `ai_summary` for cards/lists, plus a longer, multi-paragraph `detailed_summary` for the full article page
-- **Sentiment analysis** — sentiment tagging per story
-- **Auto-categorization** — World, Technology, Sports, Science, Business, Entertainment, Health
+<table>
+<tr>
+<td width="50%" valign="top">
 
-### 📡 Live News Pipeline
-- Aggregates from **verified RSS sources** (BBC, Reuters, Al Jazeera, NASA, and more)
-- Scheduled background fetching via **APScheduler**, with duplicate detection
-- Graceful fallback handling so the feed never breaks, even under API rate limits
+### 🤖 AI-Powered Intelligence
+- **Gemini-generated summaries** for every article, plus deep-dive `detailed_summary` expansions
+- **Automated sentiment tagging** — Positive, Negative, Neutral, Mixed — per story
+- **Scheduled ingestion** via APScheduler, continuously refreshing content
 
-### 🔐 Passwordless Authentication
-- **No passwords, anywhere** — fully OTP-based email login via Brevo
-- **Sign in with Email** — instantly creates a bare user profile
-- **Create Your Own Account** — collects name, phone, and email for a fuller profile
-- Optional **Remember Me** for 30-day persistent sessions
-- Contact form with reply-to email support
+### 🗺️ Live World Monitor
+- Interactive **geopolitical hotspot map** with Red / Yellow / Green alert tiers
+- Real-time country-level conflict & development tracking
 
-### 🗺️ Rich Reading Experience
-- Interactive **world map** with geopolitical hotspot tracking across ~12 countries, tiered by severity
-- Category-based filtering with per-category accent colors
-- **Follow** categories with persistent preferences
-- Bookmarking, share, and text-to-speech "listen" support
-- Trending Now — live, view-count-based ranking of top stories
-- Infinite scroll for continuous browsing
-- Fully responsive, dark-themed UI with a coral (`#ff6b35`) accent
+### 🌐 Global Coverage
+- **195-country** grouped filtering dropdown
+- Category-based browsing: World, Technology, Sports, Science, Business, Entertainment, Health
 
-### 🛠️ Admin Tools
-- Separate, secured admin session (independent from user login)
-- Admin shortcut in navbar, visible only to the configured owner account
-- User and subscriber management
-- Dashboard analytics — site visits and login activity
-- Manual RSS fetch trigger for on-demand content refresh
+</td>
+<td width="50%" valign="top">
 
----
+### 🔐 Rock-Solid Auth System
+- Hybrid **OTP signup + password login** flow via Brevo transactional email
+- Full **password lifecycle**: change, forgot, and reset flows
+- Hardened against legacy account edge cases (e.g. missing password hashes)
 
-## 🧱 Tech Stack
+### 📊 Admin Command Center
+- Live dashboard with site stats & login analytics (`LoginLog`, `SiteStat`)
+- Full visibility into platform health and user activity
 
-| Layer          | Technology                                   |
-|----------------|-----------------------------------------------|
-| **Backend**    | Flask (Blueprint architecture), SQLAlchemy    |
-| **Database**   | PostgreSQL ([Neon](https://neon.tech))        |
-| **AI**         | Google Gemini API (`google-genai`)            |
-| **Email / OTP**| Brevo (Transactional Email API)               |
-| **Scheduling** | APScheduler                                   |
-| **Frontend**   | Jinja2, HTML/CSS, vanilla JS                  |
-| **Feeds**      | `feedparser`                                  |
-| **Maps**       | Leaflet.js / worldmonitor.app embed           |
-| **Deployment** | Render                                        |
+### 📱 Built for Every Screen
+- Fully responsive, mobile-first layout
+- Persistent Neon PostgreSQL storage — zero data loss across deploys
+
+</td>
+</tr>
+</table>
 
 ---
 
-## 🚀 Getting Started
+## 🏗️ Architecture
 
-### Prerequisites
-- Python 3.10+
-- A [Neon](https://neon.tech) PostgreSQL database (or any Postgres instance)
-- A [Google Gemini API key](https://ai.google.dev/)
-- A [Brevo](https://www.brevo.com/) account for transactional email (OTP delivery)
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        NewsCore Stack                        │
+├─────────────────────────────────────────────────────────────┤
+│                                                                │
+│   Sources ──▶ APScheduler ──▶ Gemini AI ──▶ Neon PostgreSQL  │
+│  (Publishers)  (Ingestion)   (Summarize +    (Persistence)   │
+│                                Sentiment)                     │
+│                                    │                          │
+│                                    ▼                          │
+│              Flask (Blueprints) ──▶ Gunicorn ──▶ Render      │
+│                    │                                          │
+│         ┌──────────┼───────────┐                             │
+│         ▼          ▼           ▼                             │
+│    Auth System  Admin Panel  World Monitor                   │
+│  (Brevo OTP +   (Dashboard,   (Iframe hotspot                │
+│   Password)      Stats)        map)                          │
+│                                                                │
+└─────────────────────────────────────────────────────────────┘
+```
 
-### Installation
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|---|---|
+| **Backend** | Flask (Blueprint architecture) |
+| **Database** | Neon PostgreSQL |
+| **AI Engine** | Google Gemini API |
+| **Scheduling** | APScheduler |
+| **Email / OTP** | Brevo (Sendinblue) |
+| **Server** | Gunicorn |
+| **Hosting** | Render (auto-deploy on `git push`) |
+| **Frontend** | Server-rendered Jinja2 + responsive CSS |
+
+---
+
+## 🚀 Live Demo
+
+<div align="center">
+
+### 👉 [newscore-tejh.onrender.com](https://newscore-tejh.onrender.com/) 👈
+
+*Real-time AI-summarized headlines, updated continuously.*
+
+</div>
+
+---
+
+## ⚙️ Getting Started
 
 ```bash
-# Clone the repo
+# Clone the repository
 git clone https://github.com/vishwajambu02/NewsCore.git
 cd NewsCore
 
-# Create and activate a virtual environment
-python -m venv venv
-venv\Scripts\activate        # Windows (PowerShell)
-source venv/bin/activate     # macOS/Linux
-
 # Install dependencies
 pip install -r requirements.txt
-```
 
-### Environment Setup
-
-Copy `.env.example` to `.env` and fill in your own values:
-
-```bash
+# Configure environment variables (see below)
 cp .env.example .env
+
+# Run locally
+flask run
 ```
 
-```env
-DATABASE_URL=your_neon_postgres_connection_string
-GEMINI_API_KEY=your_gemini_api_key
-BREVO_API_KEY=your_brevo_api_key
-SECRET_KEY=your_flask_secret_key
-ADMIN_USERNAME=your_admin_email@example.com
-```
+### 🔑 Environment Variables
 
-> ⚠️ Without a `.env` file present, the app silently falls back to SQLite instead of connecting to Neon — always confirm this file exists before running or debugging locally.
-> ⚠️ `ADMIN_USERNAME` must be a real email address — it's matched against the logged-in user's email to reveal the admin shortcut in the navbar.
-
-### Run Locally
-
-```bash
-python Run.py
-```
-
-Visit **http://127.0.0.1:5000** 🎉
-
-*(Tested in Microsoft Edge — some in-browser dev environments don't persist session cookies correctly.)*
-
-### Backfilling AI Summaries
-
-If you're seeding the database with older articles missing `detailed_summary`:
-
-```bash
-python backfill_summaries.py
-```
-
----
-
-## 📂 Project Structure
-
-```
-NewsCore/
-├── models/          # SQLAlchemy models (Article, User, SiteStat, LoginLog, ...)
-├── routes/          # Flask blueprints / view functions (auth, admin, articles)
-├── services/        # Gemini AI service, RSS fetcher, email/OTP service
-├── templates/       # Jinja2 templates
-├── static/
-│   ├── css/
-│   ├── js/          # main.js — infinite scroll, UI interactions
-│   └── images/
-├── utils/           # Decorators and helpers
-├── migrations/      # Database migration scripts
-├── Run.py           # Application entry point
-├── config.py        # App configuration
-├── extensions.py    # Flask extension instances
-└── backfill_summaries.py
-```
-
-> Adjust this tree to match your actual repository layout before publishing.
-
----
-
-## 🌐 Deployment
-
-NewsCore is designed to deploy easily on **[Render](https://render.com)**:
-
-1. Push your repo to GitHub
-2. Create a new **Web Service** on Render, connected to your repo
-3. Add your environment variables in the Render dashboard
-4. Make sure `psycopg2-binary` is listed in `requirements.txt` so the Neon PostgreSQL connection works in production
-5. If using Brevo, authorize Render's outbound IPs in Brevo's security settings
-6. Set the start command, e.g.:
-   ```
-   gunicorn Run:app
-   ```
-7. Deploy 🚀
-
----
-
-## 🐛 Common Issues
-
-| Symptom | Cause |
+| Variable | Purpose |
 |---|---|
-| App silently uses SQLite instead of Postgres | Missing `.env` file |
-| All AI summaries are empty | `GEMINI_API_KEY` not loading, or Gemini quota/billing issue |
-| `psycopg2` import errors on deploy | Missing `psycopg2-binary` in `requirements.txt` |
-| OTP emails not sending | Brevo IP authorization needs updating in security settings |
-| Session doesn't persist locally | Testing in an environment that doesn't retain cookies — use a real browser like Edge |
+| `DATABASE_URL` | Neon PostgreSQL connection string |
+| `GEMINI_API_KEY` | Google Gemini API access |
+| `BREVO_API_KEY` | Transactional email for OTP flows |
+| `SECRET_KEY` | Flask session signing |
+
+> ⚠️ Without `DATABASE_URL` set, the app will silently fall back to local SQLite — always verify your `.env` is loaded in production.
+
+---
+
+## 📸 Preview
+
+> *World hotspot map, country filtering, AI sentiment tags, and the full reading experience — all live at the demo link above.*
 
 ---
 
 ## 🗺️ Roadmap
 
-- [ ] AI news chatbot ("Ask NewsCore")
-- [ ] Daily AI-generated email digest for subscribers
-- [ ] Personalized "For You" feed
-- [ ] AI-based related article recommendations
-- [ ] Backfill remaining `detailed_summary` fields for older articles
+- [ ] **SvachhSpots** integration — civic-tech sanitation discovery platform (planned)
+- [ ] Multi-language summaries (previously scoped, paused on Gemini free-tier limits)
+- [ ] Personalized news feed based on reading history
+- [ ] Push notifications for breaking Red Alert events
 
 ---
 
 ## 👤 Author
 
 **Vishwa Jambu**
-B.Tech CSE, Parul University
+B.Tech CSE, Parul University · Full-Stack Developer
 
-- GitHub: [@vishwajambu02](https://github.com/vishwajambu02)
-
----
-
-## 📄 License
-
-This project is licensed under the [MIT License](LICENSE).
+[![GitHub](https://img.shields.io/badge/GitHub-vishwajambu02-181717?style=flat-square&logo=github)](https://github.com/vishwajambu02)
 
 ---
 
 <div align="center">
 
-If you found this project interesting, consider giving it a ⭐!
+### ⭐ If NewsCore impressed you, consider starring the repo!
+
+*Built with Flask, Gemini AI, and a lot of debugging at 2 AM.*
 
 </div>
