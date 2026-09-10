@@ -11,6 +11,16 @@
     height: 100%;
     background: #111;
   }
+  /* Dark-mode filter for the OpenStreetMap tiles so it matches NewsCore's theme */
+  #hotspotMap .leaflet-tile-pane {
+    filter: invert(1) hue-rotate(180deg) brightness(0.95) contrast(0.9);
+  }
+  /* Keep markers / popups normal colors (undo the invert on them) */
+  #hotspotMap .leaflet-marker-pane,
+  #hotspotMap .leaflet-popup-pane,
+  #hotspotMap .leaflet-tooltip-pane {
+    filter: none;
+  }
   /* Style for pulsing map markers */
   .map-alert-marker {
     display: flex;
@@ -258,7 +268,10 @@ const rawArticles = [
 
 // INITIALIZE WORLD MAP LAYER
 const map = L.map('hotspotMap', { center: [22.0, 15.0], zoom: 2, minZoom: 1.5 });
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19,
+  attribution: '&copy; OpenStreetMap contributors',
+}).addTo(map);
 
 // Curated hotspot list. This is intentionally a manually maintained set, not
 // every country — most countries have no active alert, so they simply have
