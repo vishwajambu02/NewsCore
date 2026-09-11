@@ -87,6 +87,44 @@
 </head>
 </head>
 <body>
+  <body>
+  <!-- ── Boot splash (plays once per session) ── -->
+  <div class="splash-screen" id="splashScreen">
+    <div class="splash-grid"></div>
+    <span class="splash-particle"></span>
+    <span class="splash-particle"></span>
+    <span class="splash-particle"></span>
+    <span class="splash-particle"></span>
+    <span class="splash-particle"></span>
+    <span class="splash-particle"></span>
+    <div class="splash-scanline"></div>
+
+    <div class="splash-core">
+      <div class="splash-logo-wrap">
+        <div class="splash-ping"></div>
+        <div class="splash-ping splash-ping--2"></div>
+        <div class="splash-logo-mark">N</div>
+      </div>
+
+      <div>
+        <div class="splash-wordmark">
+          <span>N</span><span>e</span><span>w</span><span>s</span><span>C</span><span>o</span><span>r</span><span>e</span>
+        </div>
+        <span class="splash-ai-tag">AI</span>
+      </div>
+
+      <p class="splash-tagline">AI-SUMMARIZED NEWS</p>
+
+      <div class="splash-progress-row">
+        <div class="splash-progress-track">
+          <div class="splash-progress-fill"></div>
+        </div>
+        <span class="splash-progress-pct" id="splashPct">0%</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="lang-card">
   <div class="lang-card">
     <div class="lang-logo">N</div>
     <div class="lang-title">Choose your language</div>
@@ -101,5 +139,8 @@
       </div>
     </form>
   </div>
+      <script src="{{ url_for('static', filename='js/splash.js') }}" defer></script>
+</body>
+</html>
 </body>
 </html>
