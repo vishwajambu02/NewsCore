@@ -43,7 +43,6 @@ _client = None
 _MODEL_FALLBACK_CHAIN = [
     "gemini-flash-lite-latest",
     "gemini-2.5-flash-lite",
-    "gemini-2.0-flash",
 ]
 _model_name = _MODEL_FALLBACK_CHAIN[0]
 _warned = False
@@ -150,11 +149,14 @@ def _generate_with_model(model_name: str, user_text: str, system_prompt: str,
         raise RuntimeError("No Gemini SDK available")
 
 
-def _call_gemini(user_text: str, system_prompt: str, max_output_tokens: int, temperature: float) -> str:
+def _call_gemini(user_text: str, system_prompt: str, max_output_tokens: int,
+                  temperature: float, allow_retry: bool = True) -> str:
     """
     Makes a call to the Gemini API and returns raw text.
 
-    - Retries the SAME model on transient 503/overload errors, with increasing backoff.
+    - Retries the SAME model on transient 503/overload errors, with increasing backoff
+      (only when allow_retry=True — set this False for calls made inside a live web
+      request, so we never block the request thread with time.sleep()).
     - On a daily-quota (429) error, moves on to the NEXT model in the fallback chain
       instead of giving up — each model has its own separate daily quota bucket.
     - Only raises QuotaExhaustedError once EVERY model in the chain is exhausted.
@@ -164,9 +166,10 @@ def _call_gemini(user_text: str, system_prompt: str, max_output_tokens: int, tem
         raise RuntimeError("Gemini client not available")
 
     last_exc = None
+    max_attempts = _MAX_RETRIES if allow_retry else 1
 
     for model_name in _MODEL_FALLBACK_CHAIN:
-        for attempt in range(_MAX_RETRIES):
+        for attempt in range(max_attempts):
             try:
                 return _generate_with_model(
                     model_name, user_text, system_prompt, max_output_tokens, temperature, client
@@ -176,22 +179,23 @@ def _call_gemini(user_text: str, system_prompt: str, max_output_tokens: int, tem
                 last_exc = exc
 
                 if _is_quota_error(exc):
-                    # This model's daily/minute quota is done — try the next model.
                     print(f"[Gemini] '{model_name}' quota exhausted, "
                           f"falling back to next model in chain...")
-                    break  # break retry loop, move to next model
+                    break
 
-                if _is_overload_error(exc) and attempt < _MAX_RETRIES - 1:
-                    delay = _RETRY_DELAYS[attempt]
-                    print(f"[Gemini] '{model_name}' overloaded (503), retrying in {delay}s... "
-                          f"(attempt {attempt + 1}/{_MAX_RETRIES})")
-                    time.sleep(delay)
-                    continue
+                if _is_overload_error(exc):
+                    if allow_retry and attempt < max_attempts - 1:
+                        delay = _RETRY_DELAYS[attempt]
+                        print(f"[Gemini] '{model_name}' overloaded (503), retrying in {delay}s... "
+                              f"(attempt {attempt + 1}/{max_attempts})")
+                        time.sleep(delay)
+                        continue
+                    print(f"[Gemini] '{model_name}' overloaded, skipping retry, "
+                          f"trying next model...")
+                    break
 
-                # Not a quota error, not an overload error (or retries exhausted on this model).
                 raise
 
-    # Every model in the chain has been tried and exhausted.
     raise last_exc
 
 
