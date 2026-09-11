@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Choose your language — NewsCore</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}?v=2" />
+
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg);
+      padding: 24px;
+    }
+    .lang-card {
+      width: 100%;
+      max-width: 440px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 40px 32px;
+      text-align: center;
+    }
+    .lang-logo {
+      width: 52px; height: 52px;
+      border-radius: var(--radius-md);
+      background: var(--signal, #E63946);
+      color: #fff;
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 24px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px;
+    }
+    .lang-title {
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 22px;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+    .lang-subtitle {
+      font-family: var(--font-body);
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-bottom: 28px;
+    }
+    .lang-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .lang-option {
+      display: block;
+      width: 100%;
+      padding: 14px 12px;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition: border-color .15s ease, background .15s ease;
+    }
+    .lang-option:hover,
+    .lang-option:focus {
+      border-color: var(--electric, #457B9D);
+      background: var(--bg-hover);
+    }
+  </style>
+</head>
+<body>
+  <div class="lang-card">
+    <div class="lang-logo">N</div>
+    <div class="lang-title">Choose your language</div>
+    <div class="lang-subtitle">You can change this later.</div>
+
+    <form method="POST" action="{{ url_for('main.set_language') }}">
+      <input type="hidden" name="next" value="{{ next_url }}" />
+      <div class="lang-grid">
+        {% for code, label in languages.items() %}
+          <button type="submit" name="lang" value="{{ code }}" class="lang-option">{{ label }}</button>
+        {% endfor %}
+      </div>
+    </form>
+  </div>
+</body>
+</html>
