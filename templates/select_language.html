@@ -79,6 +79,12 @@
       background: var(--bg-hover);
     }
   </style>
+  <script>
+  if (sessionStorage.getItem('nc-splash-shown')) {
+    document.documentElement.classList.add('no-splash');
+  }
+</script>
+</head>
 </head>
 <body>
   <div class="lang-card">
