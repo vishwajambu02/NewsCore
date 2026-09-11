@@ -1,11 +1,32 @@
-from flask import Blueprint, render_template, request, jsonify, abort, current_app, url_for, flash, redirect
+from flask import Blueprint, render_template, request, jsonify, abort, current_app, url_for, flash, redirect, session
 from extensions import db, cache
 from models.article import Article
 from config import Config
 from sqlalchemy import or_, func
 from utils.decorators import login_required, current_user
+from services.translate_cache import translate_article, translate_articles
 
 main_bp = Blueprint('main', __name__)
+
+
+# ── Language selection ──────────────────────────────────────────────
+
+@main_bp.route('/language')
+def select_language():
+    next_url = request.args.get('next') or url_for('main.index')
+    return render_template('select_language.html',
+                           languages=Config.LANGUAGES,
+                           next_url=next_url)
+
+
+@main_bp.route('/language/set', methods=['POST'])
+def set_language():
+    lang = request.form.get('lang', 'en')
+    if lang not in Config.LANGUAGES:
+        lang = 'en'
+    session.permanent = True
+    session['site_lang'] = lang
+    return redirect(request.form.get('next') or url_for('main.index'))
 
 
 @main_bp.route('/')
@@ -49,6 +70,12 @@ def index():
                     .order_by(Article.published_at.desc())
                     .limit(150).all())
 
+    lang = session.get('site_lang', 'en')
+    if hero:
+        translate_article(hero, lang)
+    translate_articles(trending, lang)
+    translate_articles(articles, lang)
+
     return render_template('index.html',
                            hero=hero,
                            articles=articles,
@@ -77,6 +104,10 @@ def category(cat):
                 .order_by(Article.view_count.desc())
                 .limit(5).all())
 
+    lang = session.get('site_lang', 'en')
+    translate_articles(articles.items, lang)
+    translate_articles(trending, lang)
+
     return render_template('category.html',
                            articles=articles,
                            trending=trending,
@@ -101,6 +132,10 @@ def article(article_id):
     country = request.args.get('country', '').strip()
     back_url = url_for('main.index', country=country) if country else url_for('main.index')
 
+    lang = session.get('site_lang', 'en')
+    translate_article(a, lang)
+    translate_articles(related, lang)
+
     return render_template('article.html',
                            article=a,
                            related=related,
@@ -123,6 +158,9 @@ def search():
                     ))
                     .order_by(Article.published_at.desc())
                     .limit(30).all())
+
+    lang = session.get('site_lang', 'en')
+    translate_articles(articles, lang)
 
     return render_template('search.html',
                            articles=articles,
