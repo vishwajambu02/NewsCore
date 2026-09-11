@@ -342,6 +342,71 @@ def translate_fields(fields: dict, target_language: str) -> dict:
         return fields
 
 
+def translate_fields_batch(items: list, target_language: str) -> list:
+    """
+    Translate MANY articles' fields in a SINGLE Gemini call instead of one
+    call per article. A homepage with 30 articles used to fire 30 separate
+    translate_fields() calls — enough to blow through the free-tier
+    per-minute rate limit mid-page, so the first few articles translated
+    fine and the rest silently fell back to English. Batching keeps a
+    whole page to ~1 call.
+
+    `items` is a list of dicts like {'title':..., 'summary':...}. Returns a
+    list of dicts in the same order/length, each merged with whatever
+    translated values came back (falls back to the original values for any
+    item that fails to translate).
+    """
+    client = _get_client()
+    if client is None or not items:
+        return items
+
+    payload = {}
+    for i, item in enumerate(items):
+        non_empty = {k: v for k, v in item.items() if v}
+        if non_empty:
+            payload[str(i)] = non_empty
+
+    if not payload:
+        return items
+
+    system = (
+        f"You are a professional news translator. You will receive a JSON "
+        f"object where each key is an article index and each value is an "
+        f"object of text fields for that article. Translate every text "
+        f"value into {target_language}. Keep meaning accurate and natural "
+        f"for a news reader — do not summarise or shorten. Keep numbers, "
+        f"dates and proper nouns intact. Return ONLY a valid JSON object "
+        f"with the EXACT same structure (same indices as keys, same field "
+        f"names inside each), no markdown, no extra text."
+    )
+    user_text = json.dumps(payload, ensure_ascii=False)
+
+    try:
+        # allow_retry=False: this runs inside a live page request, so we
+        # never want a 503 backoff to block the response for 5-20s.
+        raw = _call_gemini(user_text, system, max_output_tokens=8192,
+                            temperature=0.2, allow_retry=False)
+        result = _parse_json_response(raw)
+        merged = [dict(item) for item in items]
+        if isinstance(result, dict):
+            for idx_str, translated in result.items():
+                try:
+                    idx = int(idx_str)
+                except (TypeError, ValueError):
+                    continue
+                if 0 <= idx < len(merged) and isinstance(translated, dict):
+                    merged[idx].update(
+                        {k: v for k, v in translated.items() if k in merged[idx] and v}
+                    )
+        return merged
+    except Exception as exc:
+        if _is_quota_error(exc):
+            logger.warning("[Gemini] translate_fields_batch quota hit, serving English fallback")
+        else:
+            logger.error("[Gemini] translate_fields_batch failed: %s", exc)
+        return items
+
+
 # ── Helpers ─────────────────────────────────────────────────────────────────
 
 def _parse_json_response(raw: str) -> dict:
@@ -447,4 +512,3 @@ def offline_fallback_summary(title: str) -> dict:
         "sentiment": "Neutral",
         "category": category,
     }
-
