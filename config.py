@@ -82,8 +82,7 @@ class Config:
         "Entertainment": "#E76F51",
         "Health":        "#06D6A0",
     }
-
-   LANGUAGES = {
+    LANGUAGES = {
     'en': 'English',
     'hi': 'हिन्दी',
     'gu': 'ગુજરાતી',
@@ -95,7 +94,7 @@ class Config:
 
 # code -> full English name, used inside the Gemini translation prompt
 # ('en' deliberately excluded — no translation call needed for it)
-LANGUAGE_NAMES_FOR_AI = {
+    LANGUAGE_NAMES_FOR_AI = {
     'hi': 'Hindi',
     'gu': 'Gujarati',
     'mr': 'Marathi',
