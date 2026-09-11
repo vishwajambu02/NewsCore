@@ -283,6 +283,27 @@ button {
   display: none;
   /* shown only in the mobile breakpoint below */
 }
+.icon-btn svg {
+  pointer-events: none;
+}
+
+.lang-code-badge {
+  position: absolute;
+  bottom: 2px;
+  right: 1px;
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 8px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.2px;
+  color: #fff;
+  background: var(--signal, #E63946);
+  padding: 1.5px 3px;
+  border-radius: 3px;
+  pointer-events: none;
+}
+
+/* ── Mobile categories menu (replaces nav-pills <768px) ──── */
 
 .mobile-cat-panel {
   position: fixed;
