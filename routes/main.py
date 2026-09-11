@@ -133,7 +133,7 @@ def article(article_id):
     back_url = url_for('main.index', country=country) if country else url_for('main.index')
 
     lang = session.get('site_lang', 'en')
-    translate_article(a, lang)
+    translate_article(a, lang, include_detailed=True)
     translate_articles(related, lang)
 
     return render_template('article.html',
