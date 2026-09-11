@@ -87,9 +87,9 @@ class Config:
     'hi': 'हिन्दी',
     'gu': 'ગુજરાતી',
     'mr': 'मराठी',
-    'bn': 'বাংলা',
-    'te': 'తెలుగు',
-    'ta': 'தமிழ்',
+    'bn': 'বাংলা(Bengali)',
+    'te': 'తెలుగు(Telugu)',
+    'ta': 'தமிழ்(Tamil)',
 }
 
 # code -> full English name, used inside the Gemini translation prompt
