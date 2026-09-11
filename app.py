@@ -3,7 +3,7 @@ import sys
 from models.user import User
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from flask import Flask, request, session
+from flask import Flask, request, session, redirect, url_for
 from extensions import db, cache
 from config import Config
 from models.article import Article, RSSSource
@@ -51,6 +51,27 @@ def create_app():
         from services.scheduler import init_scheduler
         from services.rss_fetcher import fetch_all_feeds
         init_scheduler(app, fetch_all_feeds, Config.RSS_REFRESH_INTERVAL)
+
+    # ── Language gate ───────────────────────────────────────────────
+    # Runs before every request. If the visitor hasn't picked a language
+    # yet, send them to the picker first (their original destination is
+    # preserved via ?next= and restored after they choose).
+
+    @app.before_request
+    def _require_language():
+        path = request.path
+        if (path.startswith('/static') or path.startswith('/admin')
+                or path.startswith('/api') or path.startswith('/language')):
+            return
+        if not session.get('site_lang'):
+            return redirect(url_for('main.select_language', next=path))
+
+    @app.context_processor
+    def inject_language_data():
+        return dict(
+            current_lang=session.get('site_lang', 'en'),
+            available_languages=Config.LANGUAGES,
+        )
 
     # ── Site visit counter ──────────────────────────────────────────
     # Counts every real page view (skips static assets and admin pages,
