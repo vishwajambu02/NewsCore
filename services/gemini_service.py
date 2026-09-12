@@ -3,6 +3,16 @@ services/gemini_service.py
 Gemini AI integration for NewsCore.
 Provides: article summarization, sentiment analysis, category classification.
 Uses google-genai SDK (new) — pip install google-genai
+
+CHANGES vs original:
+- Added a cooldown/circuit-breaker: once a (key, model) combo hits a quota
+  error, it's skipped for GEMINI_COOLDOWN_SECONDS instead of being retried
+  on every single request. This is the main slowness fix — previously,
+  every page load re-tried all exhausted keys/models and burned the full
+  10-25s budget before giving up, even though we already knew they were
+  exhausted from a request 5 seconds earlier.
+- Slightly tightened default timeouts for live-request calls so a genuinely
+  new failure fails fast instead of hanging the page.
 """
 
 import os
@@ -58,9 +68,32 @@ _RETRY_DELAYS = [5, 10, 20]  # seconds, increasing backoff
 # seen calls hang 10+ minutes past the configured timeout. This guarantees
 # the request thread gets control back, even if the orphaned background
 # call itself eventually hangs forever.
-_REQUEST_TIMEOUT_SECONDS = 6   # per single attempt
-_MAX_TOTAL_CALL_SECONDS = 10  # hard cap across ALL keys/models combined, per _call_gemini() call
+_REQUEST_TIMEOUT_SECONDS = 5   # per single attempt (was 6)
+_MAX_TOTAL_CALL_SECONDS = 8   # hard cap across ALL keys/models combined, per _call_gemini() call (was 10)
 _executor = concurrent.futures.ThreadPoolExecutor(max_workers=4, thread_name_prefix="gemini-call")
+
+# ── Circuit breaker for exhausted (key, model) combos ───────────────────────
+# Once a specific key+model hits a quota/429 error, remember it and skip it
+# for a cooldown window instead of re-trying (and re-waiting on) it on every
+# single incoming request. This is what actually fixes the "page takes
+# 10-25s" problem once quota is exhausted — without this, every request
+# rediscovers the same exhaustion the slow way.
+#
+# Quota errors on Gemini's free tier can be either a short per-minute burst
+# limit OR a full daily quota. We don't know which one we hit, so we use a
+# moderate cooldown: long enough to stop hammering, short enough to recover
+# quickly if it was just a burst.
+GEMINI_COOLDOWN_SECONDS = int(os.environ.get("GEMINI_COOLDOWN_SECONDS", "180"))
+_exhausted_until: dict[tuple[int, str], float] = {}
+
+
+def _is_in_cooldown(key_index: int, model_name: str) -> bool:
+    until = _exhausted_until.get((key_index, model_name))
+    return until is not None and time.monotonic() < until
+
+
+def _mark_exhausted(key_index: int, model_name: str):
+    _exhausted_until[(key_index, model_name)] = time.monotonic() + GEMINI_COOLDOWN_SECONDS
 
 
 def _generate_with_timeout(model_name, user_text, system_prompt, max_output_tokens,
@@ -75,7 +108,6 @@ def _generate_with_timeout(model_name, user_text, system_prompt, max_output_toke
         raise TimeoutError(
             f"Gemini call to '{model_name}' exceeded {timeout_s}s hard timeout"
         )
-
 
 
 def _get_clients():
@@ -212,18 +244,16 @@ def _call_gemini(user_text: str, system_prompt: str, max_output_tokens: int,
       Google Cloud project with its own daily quota bucket.
     - Within each key, tries each MODEL in the fallback chain (inner loop) —
       each model also has its own separate daily quota bucket.
+    - Skips any (key, model) combo that's currently in cooldown from a
+      recent quota error, instead of re-discovering the same exhaustion
+      the slow way on every request.
     - Retries the SAME model on transient 503/overload errors, with increasing
       backoff (only when allow_retry=True — set this False for calls made
       inside a live web request, so we never block the request thread with
       time.sleep()).
-    - On a daily-quota (429) error, moves on to the NEXT model, then the
-      NEXT key, instead of giving up.
-    - Only raises once every key × every model is exhausted.
-
-    max_total_seconds overrides the default _MAX_TOTAL_CALL_SECONDS budget —
-    use this for large batch calls (e.g. translating 20+ articles at once)
-    that legitimately need more time than a small single-article call, as
-    long as it still stays comfortably under the gunicorn worker timeout.
+    - On a daily-quota (429) error, marks that combo exhausted (cooldown) and
+      moves on to the NEXT model, then the NEXT key.
+    - Only raises once every key × every model is exhausted or in cooldown.
     """
     clients = _get_clients()
     if not clients:
@@ -235,9 +265,16 @@ def _call_gemini(user_text: str, system_prompt: str, max_output_tokens: int,
     attempt_timeout = per_attempt_timeout if per_attempt_timeout is not None else _REQUEST_TIMEOUT_SECONDS
 
     call_start = time.monotonic()
+    any_combo_available = False
 
     for key_index, client in enumerate(clients):
         for model_name in _MODEL_FALLBACK_CHAIN:
+
+            if _is_in_cooldown(key_index, model_name):
+                # Already known-exhausted recently — skip instantly, no wait.
+                continue
+            any_combo_available = True
+
             for attempt in range(max_attempts):
                 if time.monotonic() - call_start > budget:
                     print(f"[Gemini] Total call budget ({budget}s) exceeded, "
@@ -254,7 +291,9 @@ def _call_gemini(user_text: str, system_prompt: str, max_output_tokens: int,
 
                     if _is_quota_error(exc):
                         print(f"[Gemini] key #{key_index + 1} / '{model_name}' quota exhausted, "
+                              f"cooling down for {GEMINI_COOLDOWN_SECONDS}s and "
                               f"falling back to next model/key...")
+                        _mark_exhausted(key_index, model_name)
                         break
 
                     if _is_overload_error(exc):
@@ -269,6 +308,11 @@ def _call_gemini(user_text: str, system_prompt: str, max_output_tokens: int,
                         break
 
                     raise
+
+    if not any_combo_available:
+        print("[Gemini] All key/model combos currently in cooldown from recent quota errors "
+              "— skipping this request instantly instead of retrying.")
+        raise last_exc or QuotaExhaustedError("All Gemini key/model combos in cooldown")
 
     raise last_exc
 
@@ -302,16 +346,6 @@ def summarize_article(title: str, content: str) -> dict:
     try:
         # allow_retry=False: this runs once PER NEW ARTICLE, sequentially,
         # inside the RSS ingestion job (20 feeds, up to 15 articles each).
-        # With allow_retry=True (the default), a single overloaded (503)
-        # article would time.sleep(5s), then 10s, then 20s BEFORE falling
-        # back — and that sleep blocks the background thread for real.
-        # With 20-25 new articles per cycle, a few overloaded ones used to
-        # turn a 30-second ingestion job into several minutes, hogging the
-        # same shared Gemini thread pool that live page-translation
-        # requests need — which is why the site felt slow/laggy right
-        # around each 30-min RSS refresh. Failing fast to
-        # offline_fallback_summary() (already the fallback below) means a
-        # skipped summary today just gets picked up cleanly next cycle.
         raw = _call_gemini(user_text, _SYSTEM_PROMPT, max_output_tokens=1536,
                             temperature=0.4, allow_retry=False)
 
@@ -387,6 +421,7 @@ def chat_with_news(question: str, context_articles: list[dict]) -> str:
 
     return "Sorry, I couldn't process that question right now."
 
+
 def translate_fields(fields: dict, target_language: str):
     """
     Translate a dict of text fields (e.g. {'title':..., 'summary':...}) into
@@ -398,8 +433,7 @@ def translate_fields(fields: dict, target_language: str):
 
     Returns (result_dict, success_bool). success is False whenever the
     original English values were returned, so the caller (translate_cache)
-    knows NOT to cache a fallback as if it were a real translation — that
-    was the bug that froze random articles in English for 7 days.
+    knows NOT to cache a fallback as if it were a real translation.
     """
     clients = _get_clients()
     if not clients or not fields:
@@ -419,7 +453,8 @@ def translate_fields(fields: dict, target_language: str):
     user_text = json.dumps(non_empty, ensure_ascii=False)
 
     try:
-        raw = _call_gemini(user_text, system, max_output_tokens=2048, temperature=0.2, allow_retry=False)
+        raw = _call_gemini(user_text, system, max_output_tokens=2048, temperature=0.2,
+                            allow_retry=False, max_total_seconds=6, per_attempt_timeout=5)
         result = _parse_json_response(raw)
         if isinstance(result, dict):
             merged = dict(fields)
@@ -451,8 +486,7 @@ def translate_fields_batch(items: list, target_language: str):
         values for any item that fails to translate).
       - translated_indices is the set of positions that were ACTUALLY
         translated. The caller (translate_cache) uses this to avoid
-        caching an English fallback as if it were a real translation —
-        that was the bug that froze random cards in English for 7 days.
+        caching an English fallback as if it were a real translation.
     """
     clients = _get_clients()
     if not clients or not items:
@@ -482,14 +516,13 @@ def translate_fields_batch(items: list, target_language: str):
     try:
         # allow_retry=False: this runs inside a live page request, so we
         # never want a 503 backoff to block the response for 5-20s.
-        # max_total_seconds=25: this call can be translating 20-24 articles
-        # at once (much bigger payload than a single-article call), so it
-        # legitimately needs more time. Safe now that the Procfile gives
-        # gunicorn a 60s worker timeout with threads, instead of the old
-        # default 30s single-threaded worker.
+        # max_total_seconds trimmed to 10s (was 25s) — with the cooldown
+        # circuit breaker above, we no longer need a huge budget "just in
+        # case" every combo is slow; known-exhausted combos are skipped
+        # instantly, so 10s is plenty for genuinely fresh attempts.
         raw = _call_gemini(user_text, system, max_output_tokens=8192,
                             temperature=0.2, allow_retry=False,
-                            max_total_seconds=25, per_attempt_timeout=12)
+                            max_total_seconds=10, per_attempt_timeout=6)
         result = _parse_json_response(raw)
         merged = [dict(item) for item in items]
         translated_indices = set()
@@ -593,10 +626,6 @@ def offline_fallback_summary(title: str) -> dict:
     exhausted its daily quota. Produces a non-blank, reasonably presentable
     summary/detailed_summary from the title alone, so the UI never shows an
     empty card while waiting for the real AI quota to reset.
-
-    This is intentionally simple (no external calls) — it exists purely so
-    nothing is left blank under a deadline. Re-run the real backfill later
-    (once quota resets) to replace these with genuine AI summaries.
     """
     clean_title = title.strip().rstrip('.')
     category = _guess_category(title)
