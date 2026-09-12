@@ -58,8 +58,8 @@ _RETRY_DELAYS = [5, 10, 20]  # seconds, increasing backoff
 # seen calls hang 10+ minutes past the configured timeout. This guarantees
 # the request thread gets control back, even if the orphaned background
 # call itself eventually hangs forever.
-_REQUEST_TIMEOUT_SECONDS = 8   # per single attempt
-_MAX_TOTAL_CALL_SECONDS = 15  # hard cap across ALL keys/models combined, per _call_gemini() call
+_REQUEST_TIMEOUT_SECONDS = 6   # per single attempt
+_MAX_TOTAL_CALL_SECONDS = 10  # hard cap across ALL keys/models combined, per _call_gemini() call
 _executor = concurrent.futures.ThreadPoolExecutor(max_workers=4, thread_name_prefix="gemini-call")
 
 
