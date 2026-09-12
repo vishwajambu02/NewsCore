@@ -73,6 +73,12 @@ def create_app():
             available_languages=Config.LANGUAGES,
         )
 
+        from services.ui_strings import t as _t
+
+    @app.context_processor
+    def inject_translator():
+        return dict(t=lambda key: _t(key, session.get('site_lang', 'en')))
+
     # ── Site visit counter ──────────────────────────────────────────
     # Counts every real page view (skips static assets and admin pages,
     # so your own dashboard visits don't inflate the public visit count).
