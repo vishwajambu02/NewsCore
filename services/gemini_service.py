@@ -10,6 +10,7 @@ import json
 import re
 import time
 import logging
+import concurrent.futures
 from typing import Optional
 
 logger = logging.getLogger(__name__)
@@ -50,6 +51,30 @@ _warned = False
 # Retry settings for transient server-side errors (503 UNAVAILABLE, high demand)
 _MAX_RETRIES = 3
 _RETRY_DELAYS = [5, 10, 20]  # seconds, increasing backoff
+
+# Hard wall-clock timeout for a single Gemini call, enforced in a background
+# thread. Needed because google-genai's own HttpOptions(timeout=...) does
+# NOT reliably cut off a stalled SSL socket read in this SDK version — we've
+# seen calls hang 10+ minutes past the configured timeout. This guarantees
+# the request thread gets control back, even if the orphaned background
+# call itself eventually hangs forever.
+_REQUEST_TIMEOUT_SECONDS = 15
+_executor = concurrent.futures.ThreadPoolExecutor(max_workers=4, thread_name_prefix="gemini-call")
+
+
+def _generate_with_timeout(model_name, user_text, system_prompt, max_output_tokens,
+                            temperature, client, timeout_s=_REQUEST_TIMEOUT_SECONDS):
+    future = _executor.submit(
+        _generate_with_model, model_name, user_text, system_prompt,
+        max_output_tokens, temperature, client
+    )
+    try:
+        return future.result(timeout=timeout_s)
+    except concurrent.futures.TimeoutError:
+        raise TimeoutError(
+            f"Gemini call to '{model_name}' exceeded {timeout_s}s hard timeout"
+        )
+
 
 
 def _get_clients():
@@ -135,7 +160,11 @@ def _is_quota_error(exc: Exception) -> bool:
 
 
 def _is_overload_error(exc: Exception) -> bool:
-    """Detect transient server-side overload errors (503 UNAVAILABLE) — worth retrying."""
+    """Detect transient server-side overload errors (503 UNAVAILABLE) — worth retrying.
+    Also treats our own hard-timeout TimeoutError the same way, so a stalled
+    call falls back to the next model/key instead of hanging the request."""
+    if isinstance(exc, TimeoutError):
+        return True
     msg = str(exc).lower()
     status_code = getattr(exc, "code", None) or getattr(exc, "status_code", None)
     if status_code in (503,):
@@ -199,7 +228,7 @@ def _call_gemini(user_text: str, system_prompt: str, max_output_tokens: int,
         for model_name in _MODEL_FALLBACK_CHAIN:
             for attempt in range(max_attempts):
                 try:
-                    return _generate_with_model(
+                    return _generate_with_timeout(
                         model_name, user_text, system_prompt, max_output_tokens, temperature, client
                     )
 
