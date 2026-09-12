@@ -74,7 +74,7 @@ def index():
     if hero:
         translate_article(hero, lang)
     translate_articles(trending, lang)
-    CHUNK_SIZE = 8
+    CHUNK_SIZE = 5
     for i in range(0, len(articles), CHUNK_SIZE):
         translate_articles(articles[i:i + CHUNK_SIZE], lang)
 
