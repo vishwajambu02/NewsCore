@@ -11,6 +11,17 @@
   let   activeBtn = null;
   let   utterance = null;
 
+  // Site language code (set on <body data-lang="...">) -> speech locale
+  const LANG_MAP = {
+    en: 'en-US',
+    hi: 'hi-IN',
+    gu: 'gu-IN',
+    mr: 'mr-IN',
+    bn: 'bn-IN',
+    te: 'te-IN',
+    ta: 'ta-IN'
+  };
+
   function stopSpeech() {
     synth.cancel();
     if (activeBtn) {
@@ -25,8 +36,10 @@
   function startSpeech(btn, text) {
     stopSpeech();   // stop any existing
 
+    const siteLang = document.body.dataset.lang || 'en';
+
     utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang  = 'en-US';
+    utterance.lang  = LANG_MAP[siteLang] || 'en-US';
     utterance.rate  = 0.95;
     utterance.pitch = 1.0;
 
