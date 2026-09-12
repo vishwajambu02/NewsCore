@@ -34,7 +34,7 @@ except ImportError:
         genai_old = None
         _SDK = None
 
-_client = None
+_clients = []
 
 # Multiple free-tier models, tried in order. Each model has its OWN separate
 # daily quota bucket on Google's side — so when one model's daily limit is
@@ -52,34 +52,53 @@ _MAX_RETRIES = 3
 _RETRY_DELAYS = [5, 10, 20]  # seconds, increasing backoff
 
 
-def _get_client():
-    """Lazily initialise the Gemini client."""
-    global _client, _warned
-    if _client is not None:
-        return _client
+def _get_clients():
+    """
+    Lazily initialise ONE Gemini client per available API key.
+    Reads GEMINI_API_KEY, GEMINI_API_KEY_2, GEMINI_API_KEY_3, ... from env,
+    stopping at the first missing number. Each key = its own Google Cloud
+    project = its own separate daily quota bucket, so this multiplies your
+    free daily capacity by however many keys you add.
+    """
+    global _clients, _warned
+    if _clients:
+        return _clients
 
-    api_key = os.environ.get("GEMINI_API_KEY", "")
-    if not api_key:
+    keys = []
+    primary = os.environ.get("GEMINI_API_KEY", "")
+    if primary:
+        keys.append(primary)
+    i = 2
+    while True:
+        extra = os.environ.get(f"GEMINI_API_KEY_{i}", "")
+        if not extra:
+            break
+        keys.append(extra)
+        i += 1
+
+    if not keys:
         if not _warned:
             print("[Gemini] GEMINI_API_KEY not set — AI features disabled. "
                   "Set GEMINI_API_KEY in your .env file to enable summaries.")
             _warned = True
-        return None
+        return []
 
-    if _SDK == "genai":
-     _client = genai.Client(
-        api_key=api_key,
-        http_options=genai_types.HttpOptions(timeout=20000),  # 20s per request, in ms
-    )
-    elif _SDK == "generativeai":
-        genai_old.configure(api_key=api_key)
-        _client = genai_old.GenerativeModel(_model_name)
-    else:
-        logger.warning("[Gemini] No Gemini SDK found. Install: pip install google-genai")
-        print("[Gemini] No SDK found — run: pip install google-genai")
-        _client = None
+    for key in keys:
+        if _SDK == "genai":
+            _clients.append(genai.Client(
+                api_key=key,
+                http_options=genai_types.HttpOptions(timeout=20000),  # 20s per request, in ms
+            ))
+        elif _SDK == "generativeai":
+            genai_old.configure(api_key=key)
+            _clients.append(genai_old.GenerativeModel(_model_name))
+        else:
+            logger.warning("[Gemini] No Gemini SDK found. Install: pip install google-genai")
+            print("[Gemini] No SDK found — run: pip install google-genai")
+            break
 
-    return _client
+    print(f"[Gemini] Loaded {len(_clients)} API key(s) for rotation.")
+    return _clients
 
 
 # ── Public API ──────────────────────────────────────────────────────────────
@@ -157,47 +176,53 @@ def _call_gemini(user_text: str, system_prompt: str, max_output_tokens: int,
     """
     Makes a call to the Gemini API and returns raw text.
 
-    - Retries the SAME model on transient 503/overload errors, with increasing backoff
-      (only when allow_retry=True — set this False for calls made inside a live web
-      request, so we never block the request thread with time.sleep()).
-    - On a daily-quota (429) error, moves on to the NEXT model in the fallback chain
-      instead of giving up — each model has its own separate daily quota bucket.
-    - Only raises QuotaExhaustedError once EVERY model in the chain is exhausted.
+    - Tries each API KEY in turn (outer loop) — each key is a separate
+      Google Cloud project with its own daily quota bucket.
+    - Within each key, tries each MODEL in the fallback chain (inner loop) —
+      each model also has its own separate daily quota bucket.
+    - Retries the SAME model on transient 503/overload errors, with increasing
+      backoff (only when allow_retry=True — set this False for calls made
+      inside a live web request, so we never block the request thread with
+      time.sleep()).
+    - On a daily-quota (429) error, moves on to the NEXT model, then the
+      NEXT key, instead of giving up.
+    - Only raises once every key × every model is exhausted.
     """
-    client = _get_client()
-    if client is None:
+    clients = _get_clients()
+    if not clients:
         raise RuntimeError("Gemini client not available")
 
     last_exc = None
     max_attempts = _MAX_RETRIES if allow_retry else 1
 
-    for model_name in _MODEL_FALLBACK_CHAIN:
-        for attempt in range(max_attempts):
-            try:
-                return _generate_with_model(
-                    model_name, user_text, system_prompt, max_output_tokens, temperature, client
-                )
+    for key_index, client in enumerate(clients):
+        for model_name in _MODEL_FALLBACK_CHAIN:
+            for attempt in range(max_attempts):
+                try:
+                    return _generate_with_model(
+                        model_name, user_text, system_prompt, max_output_tokens, temperature, client
+                    )
 
-            except Exception as exc:
-                last_exc = exc
+                except Exception as exc:
+                    last_exc = exc
 
-                if _is_quota_error(exc):
-                    print(f"[Gemini] '{model_name}' quota exhausted, "
-                          f"falling back to next model in chain...")
-                    break
+                    if _is_quota_error(exc):
+                        print(f"[Gemini] key #{key_index + 1} / '{model_name}' quota exhausted, "
+                              f"falling back to next model/key...")
+                        break
 
-                if _is_overload_error(exc):
-                    if allow_retry and attempt < max_attempts - 1:
-                        delay = _RETRY_DELAYS[attempt]
-                        print(f"[Gemini] '{model_name}' overloaded (503), retrying in {delay}s... "
-                              f"(attempt {attempt + 1}/{max_attempts})")
-                        time.sleep(delay)
-                        continue
-                    print(f"[Gemini] '{model_name}' overloaded, skipping retry, "
-                          f"trying next model...")
-                    break
+                    if _is_overload_error(exc):
+                        if allow_retry and attempt < max_attempts - 1:
+                            delay = _RETRY_DELAYS[attempt]
+                            print(f"[Gemini] '{model_name}' overloaded (503), retrying in {delay}s... "
+                                  f"(attempt {attempt + 1}/{max_attempts})")
+                            time.sleep(delay)
+                            continue
+                        print(f"[Gemini] '{model_name}' overloaded, skipping retry, "
+                              f"trying next model/key...")
+                        break
 
-                raise
+                    raise
 
     raise last_exc
 
