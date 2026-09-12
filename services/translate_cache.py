@@ -56,8 +56,9 @@ def translate_article(article, lang, include_detailed=True):
         if include_detailed:
             fields['detailed_summary'] = article.detailed_summary or ''
 
-        cached = translate_fields(fields, Config.LANGUAGE_NAMES_FOR_AI[lang])
-        cache.set(key, cached, timeout=_CACHE_TTL)
+        cached, success = translate_fields(fields, Config.LANGUAGE_NAMES_FOR_AI[lang])
+        if success:
+            cache.set(key, cached, timeout=_CACHE_TTL)
 
     return _apply(article, cached)
 
@@ -100,10 +101,11 @@ def translate_articles(articles, lang, include_detailed=False):
             fields['detailed_summary'] = a.detailed_summary or ''
         fields_list.append(fields)
 
-    translated_list = translate_fields_batch(fields_list, Config.LANGUAGE_NAMES_FOR_AI[lang])
+    translated_list, translated_indices = translate_fields_batch(fields_list, Config.LANGUAGE_NAMES_FOR_AI[lang])
 
-    for (a, key), translated in zip(pending, translated_list):
-        cache.set(key, translated, timeout=_CACHE_TTL)
+    for i, ((a, key), translated) in enumerate(zip(pending, translated_list)):
+        if i in translated_indices:
+            cache.set(key, translated, timeout=_CACHE_TTL)
         _apply(a, translated)
 
     return articles
