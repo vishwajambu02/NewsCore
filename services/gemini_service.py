@@ -202,7 +202,9 @@ def _generate_with_model(model_name: str, user_text: str, system_prompt: str,
 
 
 def _call_gemini(user_text: str, system_prompt: str, max_output_tokens: int,
-                  temperature: float, allow_retry: bool = True) -> str:
+                  temperature: float, allow_retry: bool = True,
+                  max_total_seconds: float = None,
+                  per_attempt_timeout: float = None) -> str:
     """
     Makes a call to the Gemini API and returns raw text.
 
@@ -217,6 +219,11 @@ def _call_gemini(user_text: str, system_prompt: str, max_output_tokens: int,
     - On a daily-quota (429) error, moves on to the NEXT model, then the
       NEXT key, instead of giving up.
     - Only raises once every key × every model is exhausted.
+
+    max_total_seconds overrides the default _MAX_TOTAL_CALL_SECONDS budget —
+    use this for large batch calls (e.g. translating 20+ articles at once)
+    that legitimately need more time than a small single-article call, as
+    long as it still stays comfortably under the gunicorn worker timeout.
     """
     clients = _get_clients()
     if not clients:
@@ -224,19 +231,22 @@ def _call_gemini(user_text: str, system_prompt: str, max_output_tokens: int,
 
     last_exc = None
     max_attempts = _MAX_RETRIES if allow_retry else 1
+    budget = max_total_seconds if max_total_seconds is not None else _MAX_TOTAL_CALL_SECONDS
+    attempt_timeout = per_attempt_timeout if per_attempt_timeout is not None else _REQUEST_TIMEOUT_SECONDS
 
     call_start = time.monotonic()
 
     for key_index, client in enumerate(clients):
         for model_name in _MODEL_FALLBACK_CHAIN:
             for attempt in range(max_attempts):
-                if time.monotonic() - call_start > _MAX_TOTAL_CALL_SECONDS:
-                    print(f"[Gemini] Total call budget ({_MAX_TOTAL_CALL_SECONDS}s) exceeded, "
+                if time.monotonic() - call_start > budget:
+                    print(f"[Gemini] Total call budget ({budget}s) exceeded, "
                           f"giving up on remaining keys/models for this request.")
                     raise last_exc or TimeoutError("Gemini total call budget exceeded")
                 try:
                     return _generate_with_timeout(
-                        model_name, user_text, system_prompt, max_output_tokens, temperature, client
+                        model_name, user_text, system_prompt, max_output_tokens, temperature, client,
+                        timeout_s=attempt_timeout
                     )
 
                 except Exception as exc:
@@ -459,8 +469,14 @@ def translate_fields_batch(items: list, target_language: str):
     try:
         # allow_retry=False: this runs inside a live page request, so we
         # never want a 503 backoff to block the response for 5-20s.
+        # max_total_seconds=25: this call can be translating 20-24 articles
+        # at once (much bigger payload than a single-article call), so it
+        # legitimately needs more time. Safe now that the Procfile gives
+        # gunicorn a 60s worker timeout with threads, instead of the old
+        # default 30s single-threaded worker.
         raw = _call_gemini(user_text, system, max_output_tokens=8192,
-                            temperature=0.2, allow_retry=False)
+                            temperature=0.2, allow_retry=False,
+                            max_total_seconds=25, per_attempt_timeout=12)
         result = _parse_json_response(raw)
         merged = [dict(item) for item in items]
         translated_indices = set()
