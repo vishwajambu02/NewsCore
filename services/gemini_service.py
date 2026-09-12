@@ -243,8 +243,8 @@ def summarize_article(title: str, content: str) -> dict:
         "category": _guess_category(title),
     }
 
-    client = _get_client()
-    if client is None:
+    clients = _get_clients()
+    if not clients:
         return fallback
 
     body = (content or "").strip()
@@ -277,8 +277,8 @@ def summarize_article(title: str, content: str) -> dict:
 
 
 def generate_digest(articles: list[dict]) -> str:
-    client = _get_client()
-    if client is None or not articles:
+    clients = _get_clients()
+    if not clients or not articles:
         return ""
 
     bullet_list = "\n".join(
@@ -303,8 +303,8 @@ def generate_digest(articles: list[dict]) -> str:
 
 
 def chat_with_news(question: str, context_articles: list[dict]) -> str:
-    client = _get_client()
-    if client is None:
+    clients = _get_clients()
+    if not clients:
         return "AI features are currently unavailable."
 
     context = "\n\n".join(
@@ -337,8 +337,8 @@ def translate_fields(fields: dict, target_language: str) -> dict:
     Falls back to the original values on any failure (quota, parse error,
     no client) so a translation hiccup never blanks out the UI.
     """
-    client = _get_client()
-    if client is None or not fields:
+    clients = _get_clients()
+    if not clients or not fields:
         return fields
 
     non_empty = {k: v for k, v in fields.items() if v}
@@ -384,8 +384,8 @@ def translate_fields_batch(items: list, target_language: str) -> list:
     translated values came back (falls back to the original values for any
     item that fails to translate).
     """
-    client = _get_client()
-    if client is None or not items:
+    clients = _get_clients()
+    if not clients or not items:
         return items
 
     payload = {}
