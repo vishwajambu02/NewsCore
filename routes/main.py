@@ -74,7 +74,9 @@ def index():
     if hero:
         translate_article(hero, lang)
     translate_articles(trending, lang)
-    translate_articles(articles, lang)
+   CHUNK_SIZE = 8
+   for i in range(0, len(articles), CHUNK_SIZE):
+       translate_articles(articles[i:i + CHUNK_SIZE], lang)
 
     return render_template('index.html',
                            hero=hero,
