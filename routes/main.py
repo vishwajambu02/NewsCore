@@ -3,7 +3,7 @@ from extensions import db, cache
 from models.article import Article
 from config import Config
 from sqlalchemy import or_, func
-from utils.decorators import login_required, current_user
+from utils.decorators import login_required, current_user, retry_on_db_error
 from services.translate_cache import translate_article, translate_articles
 
 main_bp = Blueprint('main', __name__)
@@ -30,6 +30,7 @@ def set_language():
 
 
 @main_bp.route('/')
+@retry_on_db_error
 def index():
     from datetime import datetime, timedelta
 
