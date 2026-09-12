@@ -41,7 +41,7 @@ def _fetch_source(source: RSSSource, gemini_state: dict) -> int:
 
     new_count = 0
 
-    for entry in feed.entries[:15]:
+    for entry in feed.entries[:8]:
         try:
             new_count += _process_entry(entry, source_name, source_category, source_country, gemini_state)
         except Exception as entry_err:
