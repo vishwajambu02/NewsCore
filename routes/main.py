@@ -74,7 +74,7 @@ def index():
     if hero:
         translate_article(hero, lang)
     translate_articles(trending, lang)
-    CHUNK_SIZE = 5
+    CHUNK_SIZE = 8
     for i in range(0, len(articles), CHUNK_SIZE):
         translate_articles(articles[i:i + CHUNK_SIZE], lang)
 
@@ -135,12 +135,16 @@ def article(article_id):
     back_url = url_for('main.index', country=country) if country else url_for('main.index')
 
     lang = session.get('site_lang', 'en')
-    if hero:
-        translate_article(hero, lang)
-    translate_articles(trending, lang)
-    CHUNK_SIZE = 8
-    for i in range(0, len(articles), CHUNK_SIZE):
-        translate_articles(articles[i:i + CHUNK_SIZE], lang)
+    translate_article(a, lang, include_detailed=True)
+    translate_articles(related, lang)
+
+    return render_template('article.html',
+                           article=a,
+                           related=related,
+                           categories=Config.CATEGORIES,
+                           category_colors=Config.CATEGORY_COLORS,
+                           selected_country=country,
+                           back_url=back_url)
 
 
 @main_bp.route('/search')
