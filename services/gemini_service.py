@@ -391,7 +391,7 @@ def translate_fields(fields: dict, target_language: str) -> dict:
     user_text = json.dumps(non_empty, ensure_ascii=False)
 
     try:
-        raw = _call_gemini(user_text, system, max_output_tokens=2048, temperature=0.2)
+        raw = _call_gemini(user_text, system, max_output_tokens=2048, temperature=0.2, allow_retry=False)
         result = _parse_json_response(raw)
         if isinstance(result, dict):
             merged = dict(fields)
