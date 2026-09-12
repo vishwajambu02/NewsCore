@@ -67,7 +67,7 @@ def create_app():
         if not session.get('site_lang'):
             return redirect(url_for('main.select_language', next=path))
 
-       @app.context_processor
+    @app.context_processor
     def inject_language_data():
         return dict(
             current_lang=session.get('site_lang', 'en'),
