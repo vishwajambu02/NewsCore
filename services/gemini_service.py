@@ -300,7 +300,20 @@ def summarize_article(title: str, content: str) -> dict:
     user_text = f"Title: {title}\n\nSource description:\n{body}"
 
     try:
-        raw = _call_gemini(user_text, _SYSTEM_PROMPT, max_output_tokens=1536, temperature=0.4)
+        # allow_retry=False: this runs once PER NEW ARTICLE, sequentially,
+        # inside the RSS ingestion job (20 feeds, up to 15 articles each).
+        # With allow_retry=True (the default), a single overloaded (503)
+        # article would time.sleep(5s), then 10s, then 20s BEFORE falling
+        # back — and that sleep blocks the background thread for real.
+        # With 20-25 new articles per cycle, a few overloaded ones used to
+        # turn a 30-second ingestion job into several minutes, hogging the
+        # same shared Gemini thread pool that live page-translation
+        # requests need — which is why the site felt slow/laggy right
+        # around each 30-min RSS refresh. Failing fast to
+        # offline_fallback_summary() (already the fallback below) means a
+        # skipped summary today just gets picked up cleanly next cycle.
+        raw = _call_gemini(user_text, _SYSTEM_PROMPT, max_output_tokens=1536,
+                            temperature=0.4, allow_retry=False)
 
         result = _parse_json_response(raw)
         validated = _validate_result(result, fallback)
