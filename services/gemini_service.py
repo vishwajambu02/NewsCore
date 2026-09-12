@@ -67,7 +67,7 @@ def _get_client():
         return None
 
     if _SDK == "genai":
-    _client = genai.Client(
+     _client = genai.Client(
         api_key=api_key,
         http_options=genai_types.HttpOptions(timeout=20000),  # 20s per request, in ms
     )
