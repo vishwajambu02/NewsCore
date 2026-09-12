@@ -7,6 +7,7 @@ from flask import Flask, request, session, redirect, url_for
 from extensions import db, cache
 from config import Config
 from models.article import Article, RSSSource
+from services.ui_strings import t as translate_ui 
 
 
 def create_app():
@@ -67,11 +68,9 @@ def create_app():
             return redirect(url_for('main.select_language', next=path))
 
     @app.context_processor
-    def inject_language_data():
-        return dict(
-            current_lang=session.get('site_lang', 'en'),
-            available_languages=Config.LANGUAGES,
-        )
+    def inject_translator():
+        return dict(t=lambda key: translate_ui(key, session.get('site_lang', 'en')))
+        
 
         from services.ui_strings import t as _t
 
