@@ -67,16 +67,16 @@ def create_app():
         if not session.get('site_lang'):
             return redirect(url_for('main.select_language', next=path))
 
+       @app.context_processor
+    def inject_language_data():
+        return dict(
+            current_lang=session.get('site_lang', 'en'),
+            available_languages=Config.LANGUAGES,
+        )
+
     @app.context_processor
     def inject_translator():
         return dict(t=lambda key: translate_ui(key, session.get('site_lang', 'en')))
-        
-
-        from services.ui_strings import t as _t
-
-    @app.context_processor
-    def inject_translator():
-        return dict(t=lambda key: _t(key, session.get('site_lang', 'en')))
 
     # ── Site visit counter ──────────────────────────────────────────
     # Counts every real page view (skips static assets and admin pages,
