@@ -51,9 +51,18 @@ _clients = []
 # daily quota bucket on Google's side — so when one model's daily limit is
 # exhausted, we fall back to the next one instead of stopping entirely.
 # This roughly multiplies total free daily capacity across models.
+#
+# ORDER MATTERS: 'gemini-flash-lite-latest' has been observed as overloaded
+# (503) on essentially every call, on every key, for extended periods —
+# i.e. it is not a transient blip, it is currently the least reliable
+# option. 'gemini-2.5-flash-lite' fails only on quota (429), which is a
+# clean, fast-to-detect failure that the cooldown below handles well.
+# Trying the more-likely-to-work model FIRST means we don't burn the
+# request's whole time budget hammering a model that's down, before ever
+# reaching the one that might actually respond.
 _MODEL_FALLBACK_CHAIN = [
-    "gemini-flash-lite-latest",
     "gemini-2.5-flash-lite",
+    "gemini-flash-lite-latest",
 ]
 _model_name = _MODEL_FALLBACK_CHAIN[0]
 _warned = False
@@ -84,6 +93,14 @@ _executor = concurrent.futures.ThreadPoolExecutor(max_workers=4, thread_name_pre
 # moderate cooldown: long enough to stop hammering, short enough to recover
 # quickly if it was just a burst.
 GEMINI_COOLDOWN_SECONDS = int(os.environ.get("GEMINI_COOLDOWN_SECONDS", "180"))
+# Overload (503) cooldown is shorter than quota cooldown — overload is
+# Google-side capacity pressure that can clear up in under a minute,
+# whereas quota exhaustion often means "wait for the daily reset". But it
+# still needs a cooldown, because in practice a model that's overloaded on
+# one request is overloaded on the very next one too, and without this we
+# re-discover that the slow way (a full hard-timeout wait) on every single
+# request.
+GEMINI_OVERLOAD_COOLDOWN_SECONDS = int(os.environ.get("GEMINI_OVERLOAD_COOLDOWN_SECONDS", "45"))
 _exhausted_until: dict[tuple[int, str], float] = {}
 
 
@@ -92,8 +109,9 @@ def _is_in_cooldown(key_index: int, model_name: str) -> bool:
     return until is not None and time.monotonic() < until
 
 
-def _mark_exhausted(key_index: int, model_name: str):
-    _exhausted_until[(key_index, model_name)] = time.monotonic() + GEMINI_COOLDOWN_SECONDS
+def _mark_exhausted(key_index: int, model_name: str, cooldown: float = None):
+    seconds = cooldown if cooldown is not None else GEMINI_COOLDOWN_SECONDS
+    _exhausted_until[(key_index, model_name)] = time.monotonic() + seconds
 
 
 def _generate_with_timeout(model_name, user_text, system_prompt, max_output_tokens,
@@ -303,8 +321,9 @@ def _call_gemini(user_text: str, system_prompt: str, max_output_tokens: int,
                                   f"(attempt {attempt + 1}/{max_attempts})")
                             time.sleep(delay)
                             continue
-                        print(f"[Gemini] '{model_name}' overloaded, skipping retry, "
-                              f"trying next model/key...")
+                        print(f"[Gemini] '{model_name}' overloaded, cooling down for "
+                              f"{GEMINI_OVERLOAD_COOLDOWN_SECONDS}s, trying next model/key...")
+                        _mark_exhausted(key_index, model_name, cooldown=GEMINI_OVERLOAD_COOLDOWN_SECONDS)
                         break
 
                     raise
