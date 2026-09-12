@@ -10,7 +10,6 @@ main_bp = Blueprint('main', __name__)
 
 
 # ── Language selection ──────────────────────────────────────────────
-
 @main_bp.route('/language')
 def select_language():
     next_url = request.args.get('next') or url_for('main.index')
