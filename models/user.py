@@ -28,6 +28,20 @@ class AdminLog(db.Model):
     def __repr__(self):
         return f'<AdminLog {self.action}>'
 
+class User(db.Model):
+    __tablename__ = 'users'
+
+    id            = db.Column(db.Integer, primary_key=True)
+    email         = db.Column(db.String(300), unique=True, nullable=False, index=True)
+    name          = db.Column(db.String(200), nullable=True)
+    phone         = db.Column(db.String(30), nullable=True)
+    password_hash = db.Column(db.String(300), nullable=True)
+    is_verified   = db.Column(db.Boolean, default=False)
+    created_at    = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # NEW — remembers language choice per account, not per browser session
+    preferred_lang = db.Column(db.String(5), nullable=True)
+
 
 class User(db.Model):
     __tablename__ = 'users'
