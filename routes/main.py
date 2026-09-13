@@ -17,6 +17,7 @@ def select_language():
                            languages=Config.LANGUAGES,
                            next_url=next_url)
 
+
 @main_bp.route('/language/set', methods=['POST'])
 def set_language():
     lang = request.form.get('lang', 'en')
@@ -28,7 +29,6 @@ def set_language():
     user_id = session.get('user_id')
     if user_id:
         from models.user import User
-        from extensions import db
         user = User.query.get(user_id)
         if user:
             user.preferred_lang = lang
