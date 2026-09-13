@@ -41,6 +41,8 @@ def _client_ip():
 def _log_in_user(user, remember):
     session.permanent = bool(remember)
     session['user_id'] = user.id
+    if user.preferred_lang:
+        session['site_lang'] = user.preferred_lang
 
 
 # -- Step 1: Create Your Own Account (name + phone + email) ------
