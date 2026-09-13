@@ -24,20 +24,5 @@
     {% include '_article_card.html' %}
     {% endfor %}
   </div>
-
-  <!-- Pagination -->
-  {% if articles.pages > 1 %}
-  <nav class="pagination" style="display:flex;justify-content:center;gap:8px;margin-top:40px;flex-wrap:wrap;">
-    {% if articles.has_prev %}
-    <a href="{{ url_for('main.category', cat=category, page=articles.prev_num) }}" class="btn-read">← Prev</a>
-    {% endif %}
-    <span style="display:flex;align-items:center;font-family:var(--font-mono);font-size:0.8rem;color:var(--text-2);">
-      Page {{ articles.page }} of {{ articles.pages }}
-    </span>
-    {% if articles.has_next %}
-    <a href="{{ url_for('main.category', cat=category, page=articles.next_num) }}" class="btn-read">Next →</a>
-    {% endif %}
-  </nav>
-  {% endif %}
 </div>
 {% endblock %}
