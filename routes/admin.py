@@ -119,7 +119,7 @@ def users():
                            users=users_page,
                            query=q,
                            total_users=total_users,
-                           verified_users=verified_users),
+                           verified_users=verified_users,
                            languages=Config.LANGUAGES)
 
 
