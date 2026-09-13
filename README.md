@@ -164,8 +164,7 @@ flask run
 
 ## 🗺️ Roadmap
 
-- [x] Multi-language summaries — Hindi, Gujarati, Bengali & more
-- [ ] **SvachhSpots** integration — civic-tech sanitation discovery platform (planned)
+- [ ] Multi-language summaries — Hindi, Gujarati, Bengali & more
 - [ ] Personalized news feed based on reading history
 - [ ] Push notifications for breaking Red Alert events
 
