@@ -20,7 +20,7 @@
 
 ## 🌍 What is NewsCore?
 
-NewsCore is a **live, production-deployed news intelligence platform** that ingests articles from trusted global publishers, runs them through **Google Gemini AI** for summarization and sentiment analysis, and serves them through a sleek, dark-themed reading experience — complete with a **live geopolitical hotspot map**, country-level filtering across **195 countries**, and a full authentication system built from the ground up.
+NewsCore is a **live, production-deployed news intelligence platform** that ingests articles from trusted global publishers, runs them through **Google Gemini AI** for summarization and sentiment analysis, and serves them through a sleek, dark-themed reading experience — complete with a **live geopolitical hotspot map**, country-level filtering across **195 countries**, multi-language reading support, and a full authentication system built from the ground up.
 
 This isn't a tutorial clone. It's a real system solving real engineering problems: scheduled scraping pipelines, AI rate-limit management, database persistence across ephemeral deployments, and secure multi-flow authentication — all running live on Render.
 
@@ -46,6 +46,10 @@ This isn't a tutorial clone. It's a real system solving real engineering problem
 ### 🌐 Global Coverage
 - **195-country** grouped filtering dropdown
 - Category-based browsing: World, Technology, Sports, Science, Business, Entertainment, Health
+
+### 🈯 Multi-Language Reading
+- Read news in **Hindi, Gujarati, Bengali**, and more — not just English
+- AI-translated summaries, so regional-language readers get the same quality digest
 
 </td>
 <td width="50%" valign="top">
@@ -78,7 +82,8 @@ This isn't a tutorial clone. It's a real system solving real engineering problem
 │                                                                │
 │   Sources ──▶ APScheduler ──▶ Gemini AI ──▶ Neon PostgreSQL  │
 │  (Publishers)  (Ingestion)   (Summarize +    (Persistence)   │
-│                                Sentiment)                     │
+│                                Sentiment +                    │
+│                                Translation)                   │
 │                                    │                          │
 │                                    ▼                          │
 │              Flask (Blueprints) ──▶ Gunicorn ──▶ Render      │
@@ -100,7 +105,7 @@ This isn't a tutorial clone. It's a real system solving real engineering problem
 |---|---|
 | **Backend** | Flask (Blueprint architecture) |
 | **Database** | Neon PostgreSQL |
-| **AI Engine** | Google Gemini API |
+| **AI Engine** | Google Gemini API (summarization, sentiment, translation) |
 | **Scheduling** | APScheduler |
 | **Email / OTP** | Brevo (Sendinblue) |
 | **Server** | Gunicorn |
@@ -153,14 +158,14 @@ flask run
 
 ## 📸 Preview
 
-> *World hotspot map, country filtering, AI sentiment tags, and the full reading experience — all live at the demo link above.*
+> *World hotspot map, country filtering, AI sentiment tags, multi-language reading, and the full reading experience — all live at the demo link above.*
 
 ---
 
 ## 🗺️ Roadmap
 
+- [x] Multi-language summaries — Hindi, Gujarati, Bengali & more
 - [ ] **SvachhSpots** integration — civic-tech sanitation discovery platform (planned)
-- [ ] Multi-language summaries (previously scoped, paused on Gemini free-tier limits)
 - [ ] Personalized news feed based on reading history
 - [ ] Push notifications for breaking Red Alert events
 
