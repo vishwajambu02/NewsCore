@@ -64,6 +64,9 @@
               <span style="color:var(--text-3)">— Unverified</span>
               {% endif %}
             </td>
+            <td style="padding:10px 8px;color:var(--text-2);font-family:var(--font-mono);font-size:0.8rem">
+  {{ languages.get(u.preferred_lang, u.preferred_lang) if u.preferred_lang else '—' }}
+</td>
             <td style="padding:10px 8px;text-align:right;color:var(--text-3);font-family:var(--font-mono);font-size:0.8rem">
               {{ u.created_at.strftime('%d %b %Y, %H:%M') }}
             </td>
