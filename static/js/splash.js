@@ -24,7 +24,6 @@
   const failsafeTimer = setTimeout(forceRemove, HARD_FAILSAFE_MS);
 
   try {
-    // Already shown this session (html.no-splash) → nothing to do.
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduceMotion) {
       clearTimeout(failsafeTimer);
