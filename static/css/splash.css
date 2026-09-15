@@ -229,6 +229,7 @@ body.splash-lock {
     font-size: 30px;
     letter-spacing: -0.5px;
     color: var(--text-primary, #f0f0f5);
+    text-transform: uppercase;
 }
 
 .splash-wordmark span {
