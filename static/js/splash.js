@@ -25,11 +25,6 @@
 
   try {
     // Already shown this session (html.no-splash) → nothing to do.
-    if (document.documentElement.classList.contains('no-splash')) {
-      clearTimeout(failsafeTimer);
-      forceRemove();
-      return;
-    }
 
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduceMotion) {
