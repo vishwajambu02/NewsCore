@@ -29,11 +29,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/splash.css') }}?v=2" />
   {% block extra_css %}{% endblock %}
 
-  <script>
-    if (sessionStorage.getItem('nc-splash-shown')) {
-      document.documentElement.classList.add('no-splash');
-    }
-  </script>
+
 </head>
 <body data-lang="{{ current_lang }}" class="{% block body_class %}{% endblock %}">
 
