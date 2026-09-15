@@ -222,15 +222,19 @@ body.splash-lock {
 }
 
 .splash-wordmark {
+    display: flex;
     font-family: var(--font-display, 'Syne', sans-serif);
     font-weight: 800;
     font-size: 30px;
     letter-spacing: -0.5px;
     color: var(--text-primary, #f0f0f5);
-    text-transform: uppercase;
+}
+
+.splash-wordmark span {
     opacity: 0;
+    display: inline-block;
     transform: translateY(14px);
-    animation: splash-letter-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.42s forwards;
+    animation: splash-letter-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 /* Staggered per-letter delay, starting after the logo settles */
