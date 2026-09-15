@@ -18,7 +18,6 @@
     if (!splash.isConnected) return; // already removed
     splash.remove();
     document.body.classList.remove('splash-lock');
-    try { sessionStorage.setItem('nc-splash-shown', '1'); } catch (e) { /* ignore */ }
   }
 
   // Hard failsafe — fires regardless of any error below.
