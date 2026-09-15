@@ -18,6 +18,7 @@
     if (!splash.isConnected) return; // already removed
     splash.remove();
     document.body.classList.remove('splash-lock');
+    try { sessionStorage.setItem('nc-splash-shown', '1'); } catch (e) { /* ignore */ }
   }
 
   // Hard failsafe — fires regardless of any error below.
@@ -25,6 +26,11 @@
 
   try {
     // Already shown this session (html.no-splash) → nothing to do.
+    if (document.documentElement.classList.contains('no-splash')) {
+      clearTimeout(failsafeTimer);
+      forceRemove();
+      return;
+    }
 
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduceMotion) {
