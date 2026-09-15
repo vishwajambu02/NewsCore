@@ -29,11 +29,6 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/splash.css') }}?v=2" />
   {% block extra_css %}{% endblock %}
 
-  <script>
-    if (sessionStorage.getItem('nc-splash-shown')) {
-      document.documentElement.classList.add('no-splash');
-    }
-  </script>
 </head>
 <body data-lang="{{ current_lang }}" class="{% block body_class %}{% endblock %}">
 
@@ -56,7 +51,11 @@
       </div>
 
       <div>
-        
+        <div class="splash-wordmark">
+          <span>N</span><span>e</span><span>w</span><span>s</span><span>C</span><span>o</span><span>r</span><span>e</span>
+        </div>
+        <span class="splash-ai-tag">AI</span>
+      </div>
 
       <p class="splash-tagline">AI-SUMMARIZED NEWS</p>
 
